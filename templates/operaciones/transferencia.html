@@ -1,0 +1,210 @@
+{% extends 'base.html' %}
+{% load crispy_forms_tags %}
+
+{% block title %}Realizar Transferencia - Sistema Bancario{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+    <h1 class="h2"><i class="bi bi-arrow-left-right"></i> Realizar Transferencia</h1>
+    <div class="btn-toolbar mb-2 mb-md-0">
+        <a href="{% url 'core:dashboard' %}" class="btn btn-outline-secondary">
+            <i class="bi bi-arrow-left"></i> Volver
+        </a>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-lg-10 mx-auto">
+        <!-- Información Importante -->
+        <div class="alert alert-info">
+            <h5><i class="bi bi-info-circle"></i> Información Importante</h5>
+            <ul class="mb-0">
+                <li>Las transferencias se pueden realizar entre cuentas de ahorro y corrientes</li>
+                <li>Si las cuentas son de moneda diferente, se aplicará el tipo de cambio del día</li>
+                <li>El monto no puede exceder el saldo disponible de la cuenta origen</li>
+                <li>No se pueden realizar transferencias desde cuentas a plazo fijo</li>
+            </ul>
+        </div>
+
+        <div class="card shadow">
+            <div class="card-body">
+                <form method="post" id="transferenciaForm">
+                    {% csrf_token %}
+                    
+                    <div class="row">
+                        <!-- Cuenta Origen -->
+                        <div class="col-md-6">
+                            <div class="card border-primary mb-3">
+                                <div class="card-header bg-primary text-white">
+                                    <h6 class="mb-0"><i class="bi bi-arrow-up-circle"></i> Cuenta Origen</h6>
+                                </div>
+                                <div class="card-body">
+                                    <div class="mb-3">
+                                        <label for="{{ form.cuenta_origen.id_for_label }}" class="form-label required-field">
+                                            Seleccionar Cuenta
+                                        </label>
+                                        {{ form.cuenta_origen }}
+                                        {% if form.cuenta_origen.errors %}
+                                            <div class="text-danger">{{ form.cuenta_origen.errors }}</div>
+                                        {% endif %}
+                                    </div>
+                                    <div id="infoCuentaOrigen" style="display: none;">
+                                        <div class="alert alert-light">
+                                            <small>
+                                                <strong>Saldo Disponible:</strong><br>
+                                                <span id="saldoOrigen">-</span>
+                                            </small>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Cuenta Destino -->
+                        <div class="col-md-6">
+                            <div class="card border-success mb-3">
+                                <div class="card-header bg-success text-white">
+                                    <h6 class="mb-0"><i class="bi bi-arrow-down-circle"></i> Cuenta Destino</h6>
+                                </div>
+                                <div class="card-body">
+                                    <div class="mb-3">
+                                        <label for="{{ form.cuenta_destino.id_for_label }}" class="form-label required-field">
+                                            Seleccionar Cuenta
+                                        </label>
+                                        {{ form.cuenta_destino }}
+                                        {% if form.cuenta_destino.errors %}
+                                            <div class="text-danger">{{ form.cuenta_destino.errors }}</div>
+                                        {% endif %}
+                                    </div>
+                                    <div id="infoCuentaDestino" style="display: none;">
+                                        <div class="alert alert-light">
+                                            <small>
+                                                <strong>Información:</strong><br>
+                                                <span id="infoDestino">-</span>
+                                            </small>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <hr class="my-3">
+
+                    <!-- Monto y Descripción -->
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="{{ form.monto_origen.id_for_label }}" class="form-label required-field">
+                                    Monto a Transferir
+                                </label>
+                                <div class="input-group">
+                                    <span class="input-group-text"><i class="bi bi-cash-stack"></i></span>
+                                    {{ form.monto_origen }}
+                                </div>
+                                {% if form.monto_origen.errors %}
+                                    <div class="text-danger">{{ form.monto_origen.errors }}</div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="{{ form.descripcion.id_for_label }}" class="form-label">
+                                    Descripción (Opcional)
+                                </label>
+                                {{ form.descripcion }}
+                                {% if form.descripcion.errors %}
+                                    <div class="text-danger">{{ form.descripcion.errors }}</div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Alerta de Conversión -->
+                    <div id="alertaConversion" class="alert alert-warning" style="display: none;">
+                        <i class="bi bi-currency-exchange"></i>
+                        <strong>Conversión de Moneda:</strong><br>
+                        <span id="textoConversion"></span>
+                    </div>
+
+                    <!-- Botones -->
+                    <hr class="my-4">
+                    <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                        <a href="{% url 'core:dashboard' %}" class="btn btn-secondary">
+                            <i class="bi bi-x-circle"></i> Cancelar
+                        </a>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="bi bi-arrow-left-right"></i> Realizar Transferencia
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function mostrarSaldoOrigen() {
+    const cuentaSelect = document.getElementById('{{ form.cuenta_origen.id_for_label }}');
+    const infoDiv = document.getElementById('infoCuentaOrigen');
+    
+    if (cuentaSelect.value) {
+        infoDiv.style.display = 'block';
+        const optionText = cuentaSelect.options[cuentaSelect.selectedIndex].text;
+        document.getElementById('saldoOrigen').textContent = optionText;
+    } else {
+        infoDiv.style.display = 'none';
+    }
+    
+    verificarConversion();
+}
+
+function mostrarInfoDestino() {
+    const cuentaSelect = document.getElementById('{{ form.cuenta_destino.id_for_label }}');
+    const infoDiv = document.getElementById('infoCuentaDestino');
+    
+    if (cuentaSelect.value) {
+        infoDiv.style.display = 'block';
+        const optionText = cuentaSelect.options[cuentaSelect.selectedIndex].text;
+        document.getElementById('infoDestino').textContent = optionText;
+    } else {
+        infoDiv.style.display = 'none';
+    }
+    
+    verificarConversion();
+}
+
+function verificarConversion() {
+    const cuentaOrigen = document.getElementById('{{ form.cuenta_origen.id_for_label }}');
+    const cuentaDestino = document.getElementById('{{ form.cuenta_destino.id_for_label }}');
+    const alertaConversion = document.getElementById('alertaConversion');
+    
+    if (cuentaOrigen.value && cuentaDestino.value) {
+        const origenText = cuentaOrigen.options[cuentaOrigen.selectedIndex].text;
+        const destinoText = cuentaDestino.options[cuentaDestino.selectedIndex].text;
+        
+        // Verificar si las monedas son diferentes (simplificado)
+        const origenEsSoles = origenText.includes('Soles');
+        const destinoEsSoles = destinoText.includes('Soles');
+        
+        if (origenEsSoles !== destinoEsSoles) {
+            alertaConversion.style.display = 'block';
+            document.getElementById('textoConversion').textContent = 
+                'Se realizará conversión automática usando el tipo de cambio del día.';
+        } else {
+            alertaConversion.style.display = 'none';
+        }
+    } else {
+        alertaConversion.style.display = 'none';
+    }
+}
+
+// Inicializar al cargar
+document.addEventListener('DOMContentLoaded', function() {
+    document.getElementById('{{ form.cuenta_origen.id_for_label }}').addEventListener('change', mostrarSaldoOrigen);
+    document.getElementById('{{ form.cuenta_destino.id_for_label }}').addEventListener('change', mostrarInfoDestino);
+});
+</script>
+{% endblock %}

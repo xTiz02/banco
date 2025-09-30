@@ -1,0 +1,122 @@
+{% extends 'base.html' %}
+{% load crispy_forms_tags %}
+
+{% block title %}Lista de Cuentas - Sistema Bancario{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+    <h1 class="h2"><i class="bi bi-credit-card"></i> Lista de Cuentas</h1>
+    <div class="btn-toolbar mb-2 mb-md-0">
+        <a href="{% url 'cuentas:apertura_cuenta' %}" class="btn btn-primary">
+            <i class="bi bi-plus-circle"></i> Aperturar Cuenta
+        </a>
+    </div>
+</div>
+
+<!-- Filtros de Búsqueda -->
+<div class="card mb-4">
+    <div class="card-body">
+        <form method="get" class="row g-3">
+            <div class="col-md-5">
+                {{ form.busqueda }}
+            </div>
+            <div class="col-md-3">
+                {{ form.tipo_cuenta }}
+            </div>
+            <div class="col-md-2">
+                {{ form.estado }}
+            </div>
+            <div class="col-md-2">
+                <button type="submit" class="btn btn-primary w-100">
+                    <i class="bi bi-search"></i> Buscar
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Tabla de Cuentas -->
+<div class="card shadow">
+    <div class="card-header">
+        <h5 class="mb-0">Total: {{ cuentas.count }} cuenta(s)</h5>
+    </div>
+    <div class="card-body">
+        {% if cuentas %}
+        <div class="table-responsive">
+            <table class="table table-hover">
+                <thead class="table-light">
+                    <tr>
+                        <th>N° Cuenta</th>
+                        <th>Cliente</th>
+                        <th>Tipo</th>
+                        <th>Moneda</th>
+                        <th>Saldo</th>
+                        <th>Saldo Disponible</th>
+                        <th>Estado</th>
+                        <th>Fecha Apertura</th>
+                        <th>Acciones</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for cuenta in cuentas %}
+                    <tr>
+                        <td><code>{{ cuenta.numero_cuenta }}</code></td>
+                        <td>
+                            <a href="{% url 'clientes:detalle_cliente' cuenta.cliente.id %}">
+                                {{ cuenta.cliente.get_nombre_completo|truncatewords:3 }}
+                            </a><br>
+                            <small class="text-muted">{{ cuenta.cliente.codigo }}</small>
+                        </td>
+                        <td>
+                            <span class="badge 
+                                {% if cuenta.tipo_cuenta == 'AHORRO' %}bg-success
+                                {% elif cuenta.tipo_cuenta == 'CORRIENTE' %}bg-primary
+                                {% else %}bg-warning text-dark{% endif %}">
+                                {{ cuenta.get_tipo_cuenta_display }}
+                            </span>
+                        </td>
+                        <td>{{ cuenta.get_moneda_display }}</td>
+                        <td><strong>{{ cuenta.saldo|floatformat:2 }}</strong></td>
+                        <td>
+                            {{ cuenta.get_saldo_disponible|floatformat:2 }}
+                            {% if cuenta.monto_embargado > 0 %}
+                            <br><small class="text-danger">
+                                <i class="bi bi-lock"></i> Embargado
+                            </small>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if cuenta.estado == 'ACTIVA' %}
+                                <span class="badge bg-success">Activa</span>
+                            {% elif cuenta.estado == 'INACTIVA' %}
+                                <span class="badge bg-warning">Inactiva</span>
+                            {% elif cuenta.estado == 'EMBARGADA' %}
+                                <span class="badge bg-danger">Embargada</span>
+                            {% else %}
+                                <span class="badge bg-secondary">Cerrada</span>
+                            {% endif %}
+                        </td>
+                        <td>{{ cuenta.fecha_apertura|date:"d/m/Y" }}</td>
+                        <td>
+                            <a href="{% url 'cuentas:detalle_cuenta' cuenta.id %}" 
+                               class="btn btn-sm btn-outline-primary">
+                                <i class="bi bi-eye"></i>
+                            </a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="text-center py-5">
+            <i class="bi bi-credit-card" style="font-size: 3rem; color: #ccc;"></i>
+            <p class="text-muted mt-3">No se encontraron cuentas</p>
+            <a href="{% url 'cuentas:apertura_cuenta' %}" class="btn btn-primary">
+                <i class="bi bi-plus-circle"></i> Aperturar Primera Cuenta
+            </a>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

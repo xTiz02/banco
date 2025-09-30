@@ -1,0 +1,24 @@
+# Configuración de Django
+SECRET_KEY=django-insecure-change-this-in-production-abc123xyz789
+DEBUG=True
+ALLOWED_HOSTS=localhost,127.0.0.1
+
+# Configuración de Base de Datos MySQL
+DB_NAME=banco_db
+DB_USER=root
+DB_PASSWORD=
+DB_HOST=localhost
+DB_PORT=3306
+
+# APIs Externas (RENIEC y SUNAT)
+# Obtén tus tokens en https://apisperu.com o similar
+RENIEC_TOKEN=tu_token_reniec_aqui
+SUNAT_TOKEN=tu_token_sunat_aqui
+
+# Configuración de Sesiones
+SESSION_COOKIE_AGE=60
+MAX_LOGIN_ATTEMPTS=3
+LOGIN_ATTEMPT_TIMEOUT=900
+
+# Límite para autorización de depósitos
+DEPOSITO_LIMITE_AUTORIZACION=2000

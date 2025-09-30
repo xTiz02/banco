@@ -1,0 +1,112 @@
+{% extends 'base.html' %}
+{% load crispy_forms_tags %}
+
+{% block title %}Lista de Clientes - Sistema Bancario{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+    <h1 class="h2"><i class="bi bi-people"></i> Lista de Clientes</h1>
+    <div class="btn-toolbar mb-2 mb-md-0">
+        <a href="{% url 'clientes:crear_cliente' %}" class="btn btn-primary">
+            <i class="bi bi-person-plus"></i> Nuevo Cliente
+        </a>
+    </div>
+</div>
+
+<!-- Filtros de Búsqueda -->
+<div class="card mb-4">
+    <div class="card-body">
+        <form method="get" class="row g-3">
+            <div class="col-md-6">
+                {{ form.busqueda }}
+            </div>
+            <div class="col-md-3">
+                {{ form.tipo_cliente }}
+            </div>
+            <div class="col-md-3">
+                <button type="submit" class="btn btn-primary w-100">
+                    <i class="bi bi-search"></i> Buscar
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Tabla de Clientes -->
+<div class="card shadow">
+    <div class="card-header">
+        <h5 class="mb-0">Total: {{ clientes.count }} cliente(s)</h5>
+    </div>
+    <div class="card-body">
+        {% if clientes %}
+        <div class="table-responsive">
+            <table class="table table-hover">
+                <thead class="table-light">
+                    <tr>
+                        <th>Código</th>
+                        <th>Tipo</th>
+                        <th>Documento</th>
+                        <th>Cliente</th>
+                        <th>Teléfono</th>
+                        <th>Email</th>
+                        <th>Estado</th>
+                        <th>Acciones</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for cliente in clientes %}
+                    <tr>
+                        <td><strong>{{ cliente.codigo }}</strong></td>
+                        <td>
+                            <span class="badge {% if cliente.tipo_cliente == 'NATURAL' %}bg-info{% else %}bg-success{% endif %}">
+                                {{ cliente.get_tipo_cliente_display }}
+                            </span>
+                        </td>
+                        <td>
+                            {{ cliente.get_tipo_documento_display }}<br>
+                            <small class="text-muted">{{ cliente.numero_documento }}</small>
+                        </td>
+                        <td>
+                            <strong>{{ cliente.get_nombre_completo }}</strong><br>
+                            <small class="text-muted">{{ cliente.direccion|truncatewords:5 }}</small>
+                        </td>
+                        <td>{{ cliente.telefono|default:"-" }}</td>
+                        <td>{{ cliente.email|default:"-" }}</td>
+                        <td>
+                            {% if cliente.esta_activo %}
+                                <span class="badge bg-success">Activo</span>
+                            {% else %}
+                                <span class="badge bg-danger">Inactivo</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <div class="btn-group btn-group-sm" role="group">
+                                <a href="{% url 'clientes:detalle_cliente' cliente.id %}" 
+                                   class="btn btn-outline-primary" 
+                                   title="Ver Detalles">
+                                    <i class="bi bi-eye"></i>
+                                </a>
+                                <a href="{% url 'clientes:editar_cliente' cliente.id %}" 
+                                   class="btn btn-outline-warning" 
+                                   title="Editar">
+                                    <i class="bi bi-pencil"></i>
+                                </a>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="text-center py-5">
+            <i class="bi bi-inbox" style="font-size: 3rem; color: #ccc;"></i>
+            <p class="text-muted mt-3">No se encontraron clientes</p>
+            <a href="{% url 'clientes:crear_cliente' %}" class="btn btn-primary">
+                <i class="bi bi-person-plus"></i> Registrar Primer Cliente
+            </a>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

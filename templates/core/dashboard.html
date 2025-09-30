@@ -1,0 +1,240 @@
+{% extends 'base.html' %}
+
+{% block title %}Dashboard - Sistema Bancario{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+    <h1 class="h2"><i class="bi bi-speedometer2"></i> Dashboard</h1>
+    <div class="btn-toolbar mb-2 mb-md-0">
+        <div class="btn-group me-2">
+            <button type="button" class="btn btn-sm btn-outline-secondary">
+                <i class="bi bi-calendar3"></i> {{ fecha|date:"d/m/Y" }}
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Alerta de Tipo de Cambio -->
+{% if not tc_configurado %}
+<div class="alert alert-warning alert-dismissible fade show" role="alert">
+    <i class="bi bi-exclamation-triangle-fill"></i>
+    <strong>¡Atención!</strong> No se ha configurado el tipo de cambio del día. 
+    <a href="{% url 'core:configurar_tipo_cambio' %}" class="alert-link">Configurar ahora</a>
+    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+</div>
+{% else %}
+<div class="alert alert-success alert-dismissible fade show" role="alert">
+    <i class="bi bi-check-circle-fill"></i>
+    <strong>Tipo de Cambio Configurado:</strong> Compra: {{ tipo_cambio.compra }} | Venta: {{ tipo_cambio.venta }}
+    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+</div>
+{% endif %}
+
+<!-- Estadísticas Principales -->
+<div class="row mb-4">
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card border-left-primary shadow h-100 py-2">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">
+                            Total Clientes
+                        </div>
+                        <div class="h5 mb-0 font-weight-bold text-gray-800">{{ total_clientes }}</div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="bi bi-people-fill text-primary" style="font-size: 2rem;"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card border-left-success shadow h-100 py-2">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-success text-uppercase mb-1">
+                            Cuentas Activas
+                        </div>
+                        <div class="h5 mb-0 font-weight-bold text-gray-800">{{ total_cuentas }}</div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="bi bi-credit-card-fill text-success" style="font-size: 2rem;"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card border-left-info shadow h-100 py-2">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-info text-uppercase mb-1">
+                            Operaciones Hoy
+                        </div>
+                        <div class="h5 mb-0 font-weight-bold text-gray-800">{{ operaciones_hoy }}</div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="bi bi-arrow-left-right text-info" style="font-size: 2rem;"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card border-left-warning shadow h-100 py-2">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">
+                            Monto Operado Hoy
+                        </div>
+                        <div class="h5 mb-0 font-weight-bold text-gray-800">
+                            S/ {{ monto_total_hoy|floatformat:2 }}
+                        </div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="bi bi-cash-stack text-warning" style="font-size: 2rem;"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Alertas y Notificaciones -->
+{% if cuentas_embargadas > 0 or cuentas_inactivas > 0 %}
+<div class="row mb-4">
+    <div class="col-lg-12">
+        <div class="card shadow">
+            <div class="card-header bg-warning text-white">
+                <h5 class="mb-0"><i class="bi bi-exclamation-triangle"></i> Cuentas que Requieren Atención</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    {% if cuentas_embargadas > 0 %}
+                    <div class="col-md-6">
+                        <div class="alert alert-danger" role="alert">
+                            <i class="bi bi-lock-fill"></i> 
+                            <strong>{{ cuentas_embargadas }}</strong> cuenta(s) con embargo total
+                        </div>
+                    </div>
+                    {% endif %}
+                    {% if cuentas_inactivas > 0 %}
+                    <div class="col-md-6">
+                        <div class="alert alert-warning" role="alert">
+                            <i class="bi bi-pause-circle"></i> 
+                            <strong>{{ cuentas_inactivas }}</strong> cuenta(s) inactiva(s)
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<!-- Últimos Movimientos -->
+<div class="row">
+    <div class="col-lg-12">
+        <div class="card shadow mb-4">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="bi bi-clock-history"></i> Últimos Movimientos</h5>
+            </div>
+            <div class="card-body">
+                {% if ultimos_movimientos %}
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Fecha/Hora</th>
+                                <th>Cuenta</th>
+                                <th>Tipo</th>
+                                <th>Monto</th>
+                                <th>Saldo Nuevo</th>
+                                <th>Usuario</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for movimiento in ultimos_movimientos %}
+                            <tr>
+                                <td>{{ movimiento.fecha_hora|date:"d/m/Y H:i" }}</td>
+                                <td>
+                                    <a href="{% url 'cuentas:detalle_cuenta' movimiento.cuenta.id %}">
+                                        {{ movimiento.cuenta.numero_cuenta }}
+                                    </a>
+                                </td>
+                                <td>
+                                    <span class="badge 
+                                        {% if movimiento.tipo_movimiento == 'DEPOSITO' %}bg-success
+                                        {% elif movimiento.tipo_movimiento == 'RETIRO' %}bg-warning
+                                        {% elif 'TRANSFERENCIA' in movimiento.tipo_movimiento %}bg-info
+                                        {% else %}bg-secondary
+                                        {% endif %}">
+                                        {{ movimiento.get_tipo_movimiento_display }}
+                                    </span>
+                                </td>
+                                <td>{{ movimiento.cuenta.get_moneda_display }} {{ movimiento.monto|floatformat:2 }}</td>
+                                <td>{{ movimiento.cuenta.get_moneda_display }} {{ movimiento.saldo_nuevo|floatformat:2 }}</td>
+                                <td>{{ movimiento.usuario.username }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <p class="text-muted text-center">No hay movimientos registrados</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Accesos Rápidos -->
+<div class="row">
+    <div class="col-lg-12">
+        <div class="card shadow">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="bi bi-lightning-fill"></i> Accesos Rápidos</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-3 mb-3">
+                        <a href="{% url 'clientes:crear_cliente' %}" class="btn btn-outline-primary w-100">
+                            <i class="bi bi-person-plus-fill"></i><br>Nuevo Cliente
+                        </a>
+                    </div>
+                    <div class="col-md-3 mb-3">
+                        <a href="{% url 'cuentas:apertura_cuenta' %}" class="btn btn-outline-success w-100">
+                            <i class="bi bi-plus-circle-fill"></i><br>Aperturar Cuenta
+                        </a>
+                    </div>
+                    <div class="col-md-3 mb-3">
+                        <a href="{% url 'operaciones:realizar_deposito' %}" class="btn btn-outline-info w-100">
+                            <i class="bi bi-arrow-down-circle-fill"></i><br>Realizar Depósito
+                        </a>
+                    </div>
+                    <div class="col-md-3 mb-3">
+                        <a href="{% url 'reportes:resumen_operaciones_dia' %}" class="btn btn-outline-warning w-100">
+                            <i class="bi bi-file-earmark-text-fill"></i><br>Ver Resumen
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .border-left-primary { border-left: 0.25rem solid #4e73df !important; }
+    .border-left-success { border-left: 0.25rem solid #1cc88a !important; }
+    .border-left-info { border-left: 0.25rem solid #36b9cc !important; }
+    .border-left-warning { border-left: 0.25rem solid #f6c23e !important; }
+</style>
+{% endblock %}

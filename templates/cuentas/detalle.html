@@ -1,0 +1,303 @@
+{% extends 'base.html' %}
+
+{% block title %}Cuenta {{ cuenta.numero_cuenta }} - Sistema Bancario{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+    <h1 class="h2"><i class="bi bi-credit-card"></i> Detalle de Cuenta</h1>
+    <div class="btn-toolbar mb-2 mb-md-0">
+        <div class="btn-group me-2">
+            {% if cuenta.esta_activa and cuenta.estado != 'CERRADA' %}
+                {% if cuenta.tipo_cuenta != 'PLAZO' %}
+                <a href="{% url 'operaciones:realizar_deposito' %}" class="btn btn-success btn-sm">
+                    <i class="bi bi-arrow-down-circle"></i> Depósito
+                </a>
+                <a href="{% url 'operaciones:realizar_retiro' %}" class="btn btn-warning btn-sm">
+                    <i class="bi bi-arrow-up-circle"></i> Retiro
+                </a>
+                {% endif %}
+                <a href="{% url 'cuentas:registrar_embargo' cuenta.id %}" class="btn btn-danger btn-sm">
+                    <i class="bi bi-lock"></i> Embargo
+                </a>
+            {% endif %}
+        </div>
+        <a href="{% url 'cuentas:lista_cuentas' %}" class="btn btn-outline-secondary btn-sm">
+            <i class="bi bi-arrow-left"></i> Volver
+        </a>
+    </div>
+</div>
+
+<!-- Información de la Cuenta -->
+<div class="row">
+    <div class="col-lg-4">
+        <!-- Datos Principales -->
+        <div class="card shadow mb-4">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="bi bi-info-circle"></i> Información de la Cuenta</h5>
+            </div>
+            <div class="card-body">
+                <div class="mb-3">
+                    <strong>Número de Cuenta:</strong><br>
+                    <code class="fs-5">{{ cuenta.numero_cuenta }}</code>
+                </div>
+                <div class="mb-3">
+                    <strong>Tipo de Cuenta:</strong><br>
+                    <span class="badge 
+                        {% if cuenta.tipo_cuenta == 'AHORRO' %}bg-success
+                        {% elif cuenta.tipo_cuenta == 'CORRIENTE' %}bg-primary
+                        {% else %}bg-warning text-dark{% endif %} fs-6">
+                        {{ cuenta.get_tipo_cuenta_display }}
+                    </span>
+                </div>
+                <div class="mb-3">
+                    <strong>Moneda:</strong><br>
+                    {{ cuenta.get_moneda_display }}
+                </div>
+                <div class="mb-3">
+                    <strong>Estado:</strong><br>
+                    {% if cuenta.estado == 'ACTIVA' %}
+                        <span class="badge bg-success fs-6">{{ cuenta.get_estado_display }}</span>
+                    {% elif cuenta.estado == 'INACTIVA' %}
+                        <span class="badge bg-warning fs-6">{{ cuenta.get_estado_display }}</span>
+                    {% elif cuenta.estado == 'EMBARGADA' %}
+                        <span class="badge bg-danger fs-6">{{ cuenta.get_estado_display }}</span>
+                    {% else %}
+                        <span class="badge bg-secondary fs-6">{{ cuenta.get_estado_display }}</span>
+                    {% endif %}
+                </div>
+                <div class="mb-3">
+                    <strong>Fecha de Apertura:</strong><br>
+                    {{ cuenta.fecha_apertura|date:"d/m/Y H:i" }}
+                </div>
+                <div class="mb-3">
+                    <strong>Último Movimiento:</strong><br>
+                    {{ cuenta.fecha_ultimo_movimiento|date:"d/m/Y H:i" }}
+                </div>
+                <div class="mb-3">
+                    <strong>Usuario Apertura:</strong><br>
+                    {{ cuenta.usuario_apertura.get_full_name|default:cuenta.usuario_apertura.username }}
+                </div>
+            </div>
+        </div>
+
+        <!-- Saldos -->
+        <div class="card shadow mb-4 border-primary">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0"><i class="bi bi-cash-stack"></i> Saldos</h5>
+            </div>
+            <div class="card-body">
+                <div class="mb-3">
+                    <strong>Saldo Actual:</strong><br>
+                    <h3 class="text-primary mb-0">
+                        {{ cuenta.get_moneda_display }} {{ cuenta.saldo|floatformat:2 }}
+                    </h3>
+                </div>
+                {% if cuenta.monto_embargado > 0 %}
+                <div class="mb-3 alert alert-danger">
+                    <strong><i class="bi bi-lock"></i> Monto Embargado:</strong><br>
+                    <h4 class="text-danger mb-0">
+                        {{ cuenta.get_moneda_display }} {{ cuenta.monto_embargado|floatformat:2 }}
+                    </h4>
+                </div>
+                {% endif %}
+                <div class="mb-3">
+                    <strong>Saldo Disponible:</strong><br>
+                    <h4 class="{% if saldo_disponible <= 0 %}text-danger{% else %}text-success{% endif %} mb-0">
+                        {{ cuenta.get_moneda_display }} {{ saldo_disponible|floatformat:2 }}
+                    </h4>
+                </div>
+                {% if cuenta.tipo_cuenta == 'CORRIENTE' and cuenta.monto_sobregiro > 0 %}
+                <div class="mb-3">
+                    <strong>Sobregiro Disponible:</strong><br>
+                    {{ cuenta.get_moneda_display }} {{ cuenta.monto_sobregiro|floatformat:2 }}
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Información de Cliente -->
+        <div class="card shadow mb-4">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="bi bi-person"></i> Cliente Titular</h5>
+            </div>
+            <div class="card-body">
+                <div class="mb-2">
+                    <strong>Nombre:</strong><br>
+                    <a href="{% url 'clientes:detalle_cliente' cuenta.cliente.id %}">
+                        {{ cuenta.cliente.get_tipo_documento_display }}: {{ cuenta.cliente.numero_documento }}
+                </div>
+            </div>
+        </div>
+
+        <!-- Datos de Plazo Fijo -->
+        {% if cuenta.tipo_cuenta == 'PLAZO' %}
+        <div class="card shadow mb-4 border-warning">
+            <div class="card-header bg-warning text-dark">
+                <h5 class="mb-0"><i class="bi bi-calendar-check"></i> Plazo Fijo</h5>
+            </div>
+            <div class="card-body">
+                <div class="mb-2">
+                    <strong>Monto Inicial:</strong><br>
+                    {{ cuenta.get_moneda_display }} {{ cuenta.monto_inicial|floatformat:2 }}
+                </div>
+                <div class="mb-2">
+                    <strong>Plazo:</strong><br>
+                    {{ cuenta.plazo_meses }} meses
+                </div>
+                <div class="mb-2">
+                    <strong>Tasa de Interés:</strong><br>
+                    {{ cuenta.tasa_interes_mensual }}% mensual
+                </div>
+                <div class="mb-2">
+                    <strong>Fecha de Vencimiento:</strong><br>
+                    {{ cuenta.fecha_vencimiento|date:"d/m/Y" }}
+                </div>
+                {% if interes_generado %}
+                <hr>
+                <div class="alert alert-success mb-0">
+                    <strong>Interés Generado:</strong><br>
+                    <h5 class="mb-0">{{ cuenta.get_moneda_display }} {{ interes_generado|floatformat:2 }}</h5>
+                </div>
+                {% endif %}
+                <hr>
+                <div class="d-grid gap-2">
+                    <a href="{% url 'operaciones:cancelar_plazo_fijo' cuenta.id %}" class="btn btn-danger btn-sm">
+                        <i class="bi bi-x-circle"></i> Cancelar Plazo
+                    </a>
+                    <a href="{% url 'operaciones:renovar_plazo_fijo' cuenta.id %}" class="btn btn-success btn-sm">
+                        <i class="bi bi-arrow-repeat"></i> Renovar Plazo
+                    </a>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Acciones -->
+        {% if cuenta.esta_activa and cuenta.estado != 'CERRADA' %}
+        <div class="card shadow mb-4">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="bi bi-gear"></i> Acciones</h5>
+            </div>
+            <div class="card-body">
+                <div class="d-grid gap-2">
+                    {% if cuenta.estado == 'ACTIVA' %}
+                    <a href="{% url 'cuentas:inactivar_cuenta' cuenta.id %}" 
+                       class="btn btn-warning btn-sm"
+                       onclick="return confirm('¿Está seguro de inactivar esta cuenta?')">
+                        <i class="bi bi-pause-circle"></i> Inactivar Cuenta
+                    </a>
+                    {% elif cuenta.estado == 'INACTIVA' %}
+                    <a href="{% url 'cuentas:inactivar_cuenta' cuenta.id %}" 
+                       class="btn btn-success btn-sm"
+                       onclick="return confirm('¿Está seguro de activar esta cuenta?')">
+                        <i class="bi bi-play-circle"></i> Activar Cuenta
+                    </a>
+                    {% endif %}
+                    
+                    {% if cuenta.puede_cerrarse %}
+                    <a href="{% url 'cuentas:cerrar_cuenta' cuenta.id %}" class="btn btn-danger btn-sm">
+                        <i class="bi bi-x-circle"></i> Cerrar Cuenta
+                    </a>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+
+    <div class="col-lg-8">
+        <!-- Embargos Activos -->
+        {% if embargos_activos %}
+        <div class="card shadow mb-4 border-danger">
+            <div class="card-header bg-danger text-white">
+                <h5 class="mb-0"><i class="bi bi-exclamation-triangle"></i> Embargos Activos</h5>
+            </div>
+            <div class="card-body">
+                {% for embargo in embargos_activos %}
+                <div class="alert alert-danger">
+                    <div class="row">
+                        <div class="col-md-8">
+                            <strong>Oficio:</strong> {{ embargo.numero_oficio }}<br>
+                            <strong>Juzgado:</strong> {{ embargo.juzgado }}<br>
+                            <strong>Tipo:</strong> {% if embargo.es_total %}Total{% else %}Parcial{% endif %}<br>
+                            <strong>Monto:</strong> {{ cuenta.get_moneda_display }} {{ embargo.monto_embargado|floatformat:2 }}<br>
+                            <strong>Fecha:</strong> {{ embargo.fecha_embargo|date:"d/m/Y H:i" }}
+                        </div>
+                        <div class="col-md-4 text-end">
+                            <form method="post" action="{% url 'cuentas:levantar_embargo' embargo.id %}">
+                                {% csrf_token %}
+                                <button type="submit" class="btn btn-success btn-sm"
+                                        onclick="return confirm('¿Confirma el levantamiento del embargo?')">
+                                    <i class="bi bi-unlock"></i> Levantar
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Últimos Movimientos -->
+        <div class="card shadow mb-4">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="mb-0"><i class="bi bi-clock-history"></i> Últimos 20 Movimientos</h5>
+                <a href="{% url 'cuentas:movimientos_cuenta' cuenta.id %}" class="btn btn-sm btn-outline-primary">
+                    Ver Todos
+                </a>
+            </div>
+            <div class="card-body">
+                {% if movimientos %}
+                <div class="table-responsive">
+                    <table class="table table-hover table-sm">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Fecha/Hora</th>
+                                <th>Tipo</th>
+                                <th>Descripción</th>
+                                <th>Monto</th>
+                                <th>Saldo</th>
+                                <th>Usuario</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for mov in movimientos %}
+                            <tr>
+                                <td>{{ mov.fecha_hora|date:"d/m/Y H:i" }}</td>
+                                <td>
+                                    <span class="badge 
+                                        {% if mov.tipo_movimiento == 'DEPOSITO' %}bg-success
+                                        {% elif mov.tipo_movimiento == 'RETIRO' %}bg-warning
+                                        {% elif 'TRANSFERENCIA' in mov.tipo_movimiento %}bg-info
+                                        {% elif 'EMBARGO' in mov.tipo_movimiento %}bg-danger
+                                        {% else %}bg-secondary{% endif %}">
+                                        {{ mov.get_tipo_movimiento_display }}
+                                    </span>
+                                </td>
+                                <td>{{ mov.descripcion|truncatewords:8 }}</td>
+                                <td>
+                                    {% if mov.tipo_movimiento == 'RETIRO' or 'ENVIADA' in mov.tipo_movimiento %}
+                                        <span class="text-danger">-{{ mov.monto|floatformat:2 }}</span>
+                                    {% else %}
+                                        <span class="text-success">+{{ mov.monto|floatformat:2 }}</span>
+                                    {% endif %}
+                                </td>
+                                <td><strong>{{ mov.saldo_nuevo|floatformat:2 }}</strong></td>
+                                <td>{{ mov.usuario.username }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <div class="text-center py-4">
+                    <i class="bi bi-inbox" style="font-size: 3rem; color: #ccc;"></i>
+                    <p class="text-muted mt-3">No hay movimientos registrados</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

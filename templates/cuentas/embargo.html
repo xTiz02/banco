@@ -1,0 +1,171 @@
+{% extends 'base.html' %}
+{% load crispy_forms_tags %}
+
+{% block title %}Registrar Embargo - Sistema Bancario{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+    <h1 class="h2"><i class="bi bi-lock"></i> Registrar Embargo Judicial</h1>
+    <div class="btn-toolbar mb-2 mb-md-0">
+        <a href="{% url 'cuentas:detalle_cuenta' cuenta.id %}" class="btn btn-outline-secondary">
+            <i class="bi bi-arrow-left"></i> Volver
+        </a>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-lg-8 mx-auto">
+        <!-- Alerta de Advertencia -->
+        <div class="alert alert-danger">
+            <h5><i class="bi bi-exclamation-triangle"></i> Advertencia</h5>
+            <p class="mb-0">
+                El embargo judicial bloqueará total o parcialmente los fondos de la cuenta.
+                El cliente no podrá disponer del monto embargado hasta que se levante el embargo.
+            </p>
+        </div>
+
+        <!-- Información de la Cuenta -->
+        <div class="card mb-4">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0">Información de la Cuenta</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <strong>Número de Cuenta:</strong><br>
+                        <code class="fs-5">{{ cuenta.numero_cuenta }}</code>
+                    </div>
+                    <div class="col-md-6">
+                        <strong>Titular:</strong><br>
+                        {{ cuenta.cliente.get_nombre_completo }}
+                    </div>
+                </div>
+                <hr>
+                <div class="row">
+                    <div class="col-md-4">
+                        <strong>Saldo Actual:</strong><br>
+                        <h4 class="text-primary">{{ cuenta.get_moneda_display }} {{ cuenta.saldo|floatformat:2 }}</h4>
+                    </div>
+                    <div class="col-md-4">
+                        <strong>Embargado:</strong><br>
+                        <h4 class="text-danger">{{ cuenta.get_moneda_display }} {{ cuenta.monto_embargado|floatformat:2 }}</h4>
+                    </div>
+                    <div class="col-md-4">
+                        <strong>Disponible:</strong><br>
+                        <h4 class="text-success">{{ cuenta.get_moneda_display }} {{ cuenta.get_saldo_disponible|floatformat:2 }}</h4>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Formulario de Embargo -->
+        <div class="card shadow">
+            <div class="card-body">
+                <form method="post" id="embargoForm">
+                    {% csrf_token %}
+                    
+                    <div class="mb-3">
+                        <label for="{{ form.numero_oficio.id_for_label }}" class="form-label required-field">
+                            Número de Oficio Judicial
+                        </label>
+                        {{ form.numero_oficio }}
+                        {% if form.numero_oficio.errors %}
+                            <div class="text-danger">{{ form.numero_oficio.errors }}</div>
+                        {% endif %}
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="{{ form.juzgado.id_for_label }}" class="form-label required-field">
+                            Juzgado
+                        </label>
+                        {{ form.juzgado }}
+                        {% if form.juzgado.errors %}
+                            <div class="text-danger">{{ form.juzgado.errors }}</div>
+                        {% endif %}
+                    </div>
+
+                    <div class="mb-3">
+                        <div class="form-check">
+                            {{ form.es_total }}
+                            <label class="form-check-label" for="{{ form.es_total.id_for_label }}">
+                                <strong>¿Embargo Total?</strong>
+                            </label>
+                        </div>
+                        <small class="form-text text-muted">
+                            Si es embargo total, se bloqueará todo el saldo de la cuenta
+                        </small>
+                        {% if form.es_total.errors %}
+                            <div class="text-danger">{{ form.es_total.errors }}</div>
+                        {% endif %}
+                    </div>
+
+                    <div id="campoMonto">
+                        <div class="mb-3">
+                            <label for="{{ form.monto_embargado.id_for_label }}" class="form-label required-field">
+                                Monto a Embargar
+                            </label>
+                            <div class="input-group">
+                                <span class="input-group-text">{{ cuenta.get_moneda_display }}</span>
+                                {{ form.monto_embargado }}
+                            </div>
+                            <small class="form-text text-muted">
+                                Monto máximo: {{ cuenta.get_moneda_display }} {{ cuenta.saldo|floatformat:2 }}
+                            </small>
+                            {% if form.monto_embargado.errors %}
+                                <div class="text-danger">{{ form.monto_embargado.errors }}</div>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="{{ form.observaciones.id_for_label }}" class="form-label">
+                            Observaciones
+                        </label>
+                        {{ form.observaciones }}
+                        {% if form.observaciones.errors %}
+                            <div class="text-danger">{{ form.observaciones.errors }}</div>
+                        {% endif %}
+                    </div>
+
+                    <!-- Botones -->
+                    <hr class="my-4">
+                    <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                        <a href="{% url 'cuentas:detalle_cuenta' cuenta.id %}" class="btn btn-secondary">
+                            <i class="bi bi-x-circle"></i> Cancelar
+                        </a>
+                        <button type="submit" class="btn btn-danger">
+                            <i class="bi bi-lock"></i> Registrar Embargo
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function toggleEmbargoTotal() {
+    const esTotal = document.getElementById('{{ form.es_total.id_for_label }}');
+    const campoMonto = document.getElementById('campoMonto');
+    const montoInput = document.getElementById('{{ form.monto_embargado.id_for_label }}');
+    
+    if (esTotal.checked) {
+        campoMonto.style.display = 'none';
+        montoInput.value = '{{ cuenta.saldo }}';
+        montoInput.disabled = true;
+    } else {
+        campoMonto.style.display = 'block';
+        montoInput.disabled = false;
+    }
+}
+
+// Inicializar al cargar
+document.addEventListener('DOMContentLoaded', function() {
+    const esTotal = document.getElementById('{{ form.es_total.id_for_label }}');
+    esTotal.addEventListener('change', toggleEmbargoTotal);
+    toggleEmbargoTotal();
+});
+</script>
+{% endblock %}

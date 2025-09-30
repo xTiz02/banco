@@ -1,0 +1,97 @@
+{% extends 'base.html' %}
+{% load crispy_forms_tags %}
+
+{% block title %}Configurar Tipo de Cambio - Sistema Bancario{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+    <h1 class="h2"><i class="bi bi-currency-exchange"></i> Configurar Tipo de Cambio</h1>
+    <div class="btn-toolbar mb-2 mb-md-0">
+        <a href="{% url 'core:dashboard' %}" class="btn btn-outline-secondary">
+            <i class="bi bi-arrow-left"></i> Volver
+        </a>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-lg-6 mx-auto">
+        <!-- Alerta Importante -->
+        <div class="alert alert-warning">
+            <h5><i class="bi bi-exclamation-triangle"></i> Importante</h5>
+            <p class="mb-0">
+                El tipo de cambio debe configurarse <strong>diariamente</strong> antes de realizar cualquier operación.
+                Sin el tipo de cambio del día, no se podrán realizar operaciones que involucren conversión de moneda.
+            </p>
+        </div>
+
+        {% if tipo_cambio_existente %}
+        <div class="alert alert-info">
+            <i class="bi bi-info-circle"></i>
+            Ya existe un tipo de cambio configurado para hoy. Al guardar se actualizará.
+        </div>
+        {% endif %}
+
+        <div class="card shadow">
+            <div class="card-header">
+                <h5 class="mb-0">Tipo de Cambio del Día: {{ fecha|date:"d/m/Y" }}</h5>
+            </div>
+            <div class="card-body">
+                <form method="post">
+                    {% csrf_token %}
+                    
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label for="{{ form.compra.id_for_label }}" class="form-label required-field">
+                                Tipo de Cambio Compra
+                            </label>
+                            <div class="input-group">
+                                <span class="input-group-text">USD</span>
+                                {{ form.compra }}
+                            </div>
+                            <small class="form-text text-muted">
+                                Precio al que el banco compra dólares
+                            </small>
+                            {% if form.compra.errors %}
+                                <div class="text-danger">{{ form.compra.errors }}</div>
+                            {% endif %}
+                        </div>
+
+                        <div class="col-md-6">
+                            <label for="{{ form.venta.id_for_label }}" class="form-label required-field">
+                                Tipo de Cambio Venta
+                            </label>
+                            <div class="input-group">
+                                <span class="input-group-text">USD</span>
+                                {{ form.venta }}
+                            </div>
+                            <small class="form-text text-muted">
+                                Precio al que el banco vende dólares
+                            </small>
+                            {% if form.venta.errors %}
+                                <div class="text-danger">{{ form.venta.errors }}</div>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <div class="alert alert-light">
+                        <strong>Ejemplo:</strong><br>
+                        <ul class="mb-0">
+                            <li>Compra: 3.750 (El banco compra 1 USD por 3.750 Soles)</li>
+                            <li>Venta: 3.755 (El banco vende 1 USD por 3.755 Soles)</li>
+                        </ul>
+                    </div>
+
+                    <hr class="my-4">
+
+                    <div class="d-grid gap-2">
+                        <button type="submit" class="btn btn-primary btn-lg">
+                            <i class="bi bi-check-circle"></i> 
+                            {% if tipo_cambio_existente %}Actualizar{% else %}Guardar{% endif %} Tipo de Cambio
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,228 @@
+{% extends 'base.html' %}
+{% load crispy_forms_tags %}
+
+{% block title %}{{ accion }} Cliente - Sistema Bancario{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+    <h1 class="h2"><i class="bi bi-person-plus"></i> {{ accion }} Cliente</h1>
+    <div class="btn-toolbar mb-2 mb-md-0">
+        <a href="{% url 'clientes:lista_clientes' %}" class="btn btn-outline-secondary">
+            <i class="bi bi-arrow-left"></i> Volver
+        </a>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-lg-8 mx-auto">
+        <div class="card shadow">
+            <div class="card-body">
+                <form method="post" id="clienteForm">
+                    {% csrf_token %}
+                    
+                    <!-- Tipo de Cliente -->
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label for="{{ form.tipo_cliente.id_for_label }}" class="form-label required-field">
+                                Tipo de Cliente
+                            </label>
+                            {{ form.tipo_cliente }}
+                            {% if form.tipo_cliente.errors %}
+                                <div class="text-danger">{{ form.tipo_cliente.errors }}</div>
+                            {% endif %}
+                        </div>
+                        <div class="col-md-6">
+                            <label for="{{ form.tipo_documento.id_for_label }}" class="form-label required-field">
+                                Tipo de Documento
+                            </label>
+                            {{ form.tipo_documento }}
+                            {% if form.tipo_documento.errors %}
+                                <div class="text-danger">{{ form.tipo_documento.errors }}</div>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <!-- Número de Documento -->
+                    <div class="mb-3">
+                        <label for="{{ form.numero_documento.id_for_label }}" class="form-label required-field">
+                            Número de Documento
+                        </label>
+                        {{ form.numero_documento }}
+                        <small class="form-text text-muted">
+                            El sistema consultará automáticamente RENIEC o SUNAT
+                        </small>
+                        {% if form.numero_documento.errors %}
+                            <div class="text-danger">{{ form.numero_documento.errors }}</div>
+                        {% endif %}
+                    </div>
+
+                    <hr class="my-4">
+
+                    <!-- Datos para Persona Natural -->
+                    <div id="datosNatural" style="display: none;">
+                        <h5 class="mb-3">Datos de Persona Natural</h5>
+                        <div class="row mb-3">
+                            <div class="col-md-12">
+                                <label for="{{ form.nombres.id_for_label }}" class="form-label required-field">
+                                    Nombres
+                                </label>
+                                {{ form.nombres }}
+                                {% if form.nombres.errors %}
+                                    <div class="text-danger">{{ form.nombres.errors }}</div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label for="{{ form.apellido_paterno.id_for_label }}" class="form-label required-field">
+                                    Apellido Paterno
+                                </label>
+                                {{ form.apellido_paterno }}
+                                {% if form.apellido_paterno.errors %}
+                                    <div class="text-danger">{{ form.apellido_paterno.errors }}</div>
+                                {% endif %}
+                            </div>
+                            <div class="col-md-6">
+                                <label for="{{ form.apellido_materno.id_for_label }}" class="form-label required-field">
+                                    Apellido Materno
+                                </label>
+                                {{ form.apellido_materno }}
+                                {% if form.apellido_materno.errors %}
+                                    <div class="text-danger">{{ form.apellido_materno.errors }}</div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label for="{{ form.fecha_nacimiento.id_for_label }}" class="form-label">
+                                Fecha de Nacimiento
+                            </label>
+                            {{ form.fecha_nacimiento }}
+                            {% if form.fecha_nacimiento.errors %}
+                                <div class="text-danger">{{ form.fecha_nacimiento.errors }}</div>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <!-- Datos para Persona Jurídica -->
+                    <div id="datosJuridica" style="display: none;">
+                        <h5 class="mb-3">Datos de Persona Jurídica</h5>
+                        <div class="mb-3">
+                            <label for="{{ form.razon_social.id_for_label }}" class="form-label required-field">
+                                Razón Social
+                            </label>
+                            {{ form.razon_social }}
+                            {% if form.razon_social.errors %}
+                                <div class="text-danger">{{ form.razon_social.errors }}</div>
+                            {% endif %}
+                        </div>
+                        <div class="mb-3">
+                            <label for="{{ form.nombre_comercial.id_for_label }}" class="form-label">
+                                Nombre Comercial
+                            </label>
+                            {{ form.nombre_comercial }}
+                            {% if form.nombre_comercial.errors %}
+                                <div class="text-danger">{{ form.nombre_comercial.errors }}</div>
+                            {% endif %}
+                        </div>
+                        <div class="mb-3">
+                            <label for="{{ form.representante_legal.id_for_label }}" class="form-label">
+                                Representante Legal
+                            </label>
+                            {{ form.representante_legal }}
+                            {% if form.representante_legal.errors %}
+                                <div class="text-danger">{{ form.representante_legal.errors }}</div>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <hr class="my-4">
+
+                    <!-- Datos Comunes -->
+                    <h5 class="mb-3">Datos de Contacto</h5>
+                    <div class="mb-3">
+                        <label for="{{ form.direccion.id_for_label }}" class="form-label required-field">
+                            Dirección
+                        </label>
+                        {{ form.direccion }}
+                        {% if form.direccion.errors %}
+                            <div class="text-danger">{{ form.direccion.errors }}</div>
+                        {% endif %}
+                    </div>
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label for="{{ form.telefono.id_for_label }}" class="form-label">
+                                Teléfono
+                            </label>
+                            {{ form.telefono }}
+                            {% if form.telefono.errors %}
+                                <div class="text-danger">{{ form.telefono.errors }}</div>
+                            {% endif %}
+                        </div>
+                        <div class="col-md-6">
+                            <label for="{{ form.email.id_for_label }}" class="form-label">
+                                Email
+                            </label>
+                            {{ form.email }}
+                            {% if form.email.errors %}
+                                <div class="text-danger">{{ form.email.errors }}</div>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <!-- Botones -->
+                    <hr class="my-4">
+                    <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                        <a href="{% url 'clientes:lista_clientes' %}" class="btn btn-secondary">
+                            <i class="bi bi-x-circle"></i> Cancelar
+                        </a>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="bi bi-save"></i> {{ accion }} Cliente
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function toggleTipoCliente() {
+    const tipoCliente = document.getElementById('{{ form.tipo_cliente.id_for_label }}').value;
+    const tipoDocumento = document.getElementById('{{ form.tipo_documento.id_for_label }}');
+    const datosNatural = document.getElementById('datosNatural');
+    const datosJuridica = document.getElementById('datosJuridica');
+    
+    if (tipoCliente === 'NATURAL') {
+        datosNatural.style.display = 'block';
+        datosJuridica.style.display = 'none';
+        tipoDocumento.value = 'DNI';
+    } else if (tipoCliente === 'JURIDICA') {
+        datosNatural.style.display = 'none';
+        datosJuridica.style.display = 'block';
+        tipoDocumento.value = 'RUC';
+    }
+}
+
+function toggleTipoDocumento() {
+    const tipoDocumento = document.getElementById('{{ form.tipo_documento.id_for_label }}').value;
+    const tipoCliente = document.getElementById('{{ form.tipo_cliente.id_for_label }}');
+    
+    if (tipoDocumento === 'DNI') {
+        tipoCliente.value = 'NATURAL';
+    } else if (tipoDocumento === 'RUC') {
+        tipoCliente.value = 'JURIDICA';
+    }
+    toggleTipoCliente();
+}
+
+// Inicializar al cargar
+document.addEventListener('DOMContentLoaded', function() {
+    toggleTipoCliente();
+    
+    document.getElementById('{{ form.tipo_cliente.id_for_label }}').addEventListener('change', toggleTipoCliente);
+    document.getElementById('{{ form.tipo_documento.id_for_label }}').addEventListener('change', toggleTipoDocumento);
+});
+</script>
+{% endblock %}

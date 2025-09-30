@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Sistema Bancario{% endblock %}</title>
+
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+
+    <!-- Bootstrap Icons -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+
+    {% block extra_css %}{% endblock %}
+
+    <style>
+        body {
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+        .sidebar {
+            min-height: calc(100vh - 56px);
+            background-color: #f8f9fa;
+            border-right: 1px solid #dee2e6;
+        }
+        .sidebar .nav-link {
+            color: #495057;
+            padding: 0.75rem 1rem;
+        }
+        .sidebar .nav-link:hover {
+            background-color: #e9ecef;
+        }
+        .sidebar .nav-link.active {
+            background-color: #0d6efd;
+            color: white;
+        }
+        .content-wrapper {
+            flex: 1;
+        }
+        .navbar-brand {
+            font-weight: bold;
+        }
+        .card-header {
+            background-color: #0d6efd;
+            color: white;
+        }
+        .required-field::after {
+            content: " *";
+            color: red;
+        }
+    </style>
+</head>
+<body>
+    <!-- Navbar -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="{% url 'core:dashboard' %}">
+                <i class="bi bi-bank"></i> Sistema Bancario
+            </a>
+
+            {% if user.is_authenticated %}
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" id="userDropdown" role="button" data-bs-toggle="dropdown">
+                            <i class="bi bi-person-circle"></i> {{ user.get_full_name|default:user.username }}
+                            {% if user.es_administrador %}
+                                <span class="badge bg-warning text-dark">Admin</span>
+                            {% else %}
+                                <span class="badge bg-info">Empleado</span>
+                            {% endif %}
+                        </a>
+                        <ul class="dropdown-menu dropdown-menu-end">
+                            <li><a class="dropdown-item" href="{% url 'core:logout' %}">
+                                <i class="bi bi-box-arrow-right"></i> Cerrar Sesión
+                            </a></li>
+                        </ul>
+                    </li>
+                </ul>
+            </div>
+            {% endif %}
+        </div>
+    </nav>
+
+    {% if user.is_authenticated %}
+    <div class="container-fluid">
+        <div class="row">
+            <!-- Sidebar -->
+            <nav class="col-md-2 d-md-block sidebar">
+                <div class="position-sticky pt-3">
+                    <ul class="nav flex-column">
+                        <li class="nav-item">
+                            <a class="nav-link" href="{% url 'core:dashboard' %}">
+                                <i class="bi bi-speedometer2"></i> Dashboard
+                            </a>
+                        </li>
+
+                        <li class="nav-item">
+                            <h6 class="sidebar-heading px-3 mt-4 mb-1 text-muted">
+                                <span>Clientes</span>
+                            </h6>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="{% url 'clientes:lista_clientes' %}">
+                                <i class="bi bi-people"></i> Lista de Clientes
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="{% url 'clientes:crear_cliente' %}">
+                                <i class="bi bi-person-plus"></i> Registrar Cliente
+                            </a>
+                        </li>
+
+                        <li class="nav-item">
+                            <h6 class="sidebar-heading px-3 mt-4 mb-1 text-muted">
+                                <span>Cuentas</span>
+                            </h6>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="{% url 'cuentas:lista_cuentas' %}">
+                                <i class="bi bi-credit-card"></i> Lista de Cuentas
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="{% url 'cuentas:apertura_cuenta' %}">
+                                <i class="bi bi-plus-circle"></i> Apertura de Cuenta
+                            </a>
+                        </li>
+
+                        <li class="nav-item">
+                            <h6 class="sidebar-heading px-3 mt-4 mb-1 text-muted">
+                                <span>Operaciones</span>
+                            </h6>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="{% url 'operaciones:realizar_deposito' %}">
+                                <i class="bi bi-arrow-down-circle"></i> Depósito
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="{% url 'operaciones:realizar_retiro' %}">
+                                <i class="bi bi-arrow-up-circle"></i> Retiro
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="{% url 'operaciones:realizar_transferencia' %}">
+                                <i class="bi bi-arrow-left-right"></i> Transferencia
+                            </a>
+                        </li>
+
+                        <li class="nav-item">
+                            <h6 class="sidebar-heading px-3 mt-4 mb-1 text-muted">
+                                <span>Reportes</span>
+                            </h6>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="{% url 'reportes:resumen_operaciones_dia' %}">
+                                <i class="bi bi-file-earmark-text"></i> Resumen del Día
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="{% url 'reportes:consultar_movimientos' %}">
+                                <i class="bi bi-list-ul"></i> Consultar Movimientos
+                            </a>
+                        </li>
+
+                        {% if user.es_administrador %}
+                        <li class="nav-item">
+                            <h6 class="sidebar-heading px-3 mt-4 mb-1 text-muted">
+                                <span>Administración</span>
+                            </h6>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="{% url 'core:configurar_tipo_cambio' %}">
+                                <i class="bi bi-currency-exchange"></i> Tipo de Cambio
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="{% url 'core:lista_usuarios' %}">
+                                <i class="bi bi-person-gear"></i> Usuarios
+                            </a>
+                        </li>
+                        {% endif %}
+                    </ul>
+                </div>
+            </nav>
+
+            <!-- Main Content -->
+            <main class="col-md-10 ms-sm-auto px-md-4">
+                <div class="content-wrapper py-4">
+                    <!-- Mensajes -->
+                    {% if messages %}
+                        {% for message in messages %}
+                            <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                                {{ message }}
+                                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                            </div>
+                        {% endfor %}
+                    {% endif %}
+
+                    {% block content %}{% endblock %}
+                </div>
+            </main>
+        </div>
+    </div>
+    {% else %}
+    <!-- Content for non-authenticated users -->
+    <main class="flex-grow-1">
+        {% if messages %}
+            <div class="container mt-3">
+                {% for message in messages %}
+                    <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                        {{ message }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    </div>
+                {% endfor %}
+            </div>
+        {% endif %}
+
+        {% block content %}{% endblock %}
+    </main>
+    {% endif %}
+
+    <!-- Footer -->
+    <footer class="bg-light text-center text-muted py-3 mt-auto">
+        <div class="container">
+            <p class="mb-0">&copy; 2024 Sistema Bancario. Todos los derechos reservados.</p>
+        </div>
+    </footer>
+
+    <!-- Bootstrap 5 JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+    {% block extra_js %}{% endblock %}
+</body>
+</html>

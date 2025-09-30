@@ -1,0 +1,321 @@
+# COMANDOS ÚTILES PARA EL SISTEMA BANCARIO
+
+# =====================================================
+# INSTALACIÓN INICIAL
+# =====================================================
+
+# 1. Crear entorno virtual
+python -m venv venv
+
+# 2. Activar entorno virtual
+# Windows:
+venv\Scripts\activate
+# Linux/Mac:
+source venv/bin/activate
+
+# 3. Instalar dependencias
+pip install -r requirements.txt
+
+# 4. Crear base de datos (ejecutar en MySQL)
+mysql -u root -p < create_database.sql
+
+# 5. Configurar variables de entorno
+cp .env.example .env
+# Editar .env con tus credenciales
+
+# 6. Crear migraciones
+python manage.py makemigrations
+
+# 7. Aplicar migraciones
+python manage.py migrate
+
+# 8. Crear superusuario
+python manage.py createsuperuser
+
+# 9. Recolectar archivos estáticos
+python manage.py collectstatic --noinput
+
+# 10. Ejecutar servidor
+python manage.py runserver
+
+
+# =====================================================
+# GESTIÓN DE BASE DE DATOS
+# =====================================================
+
+# Ver migraciones pendientes
+python manage.py showmigrations
+
+# Crear migraciones para una app específica
+python manage.py makemigrations core
+python manage.py makemigrations clientes
+python manage.py makemigrations cuentas
+python manage.py makemigrations operaciones
+
+# Aplicar migraciones específicas
+python manage.py migrate core
+python manage.py migrate clientes
+
+# Revertir migraciones
+python manage.py migrate core 0001
+
+# Eliminar todas las migraciones y datos (CUIDADO!)
+python manage.py flush
+
+# Limpiar y recrear base de datos
+python manage.py migrate --run-syncdb
+
+
+# =====================================================
+# GESTIÓN DE USUARIOS (Django Shell)
+# =====================================================
+
+# Abrir shell de Django
+python manage.py shell
+
+# Crear usuario administrador
+from core.models import Usuario
+from django.contrib.auth.hashers import make_password
+
+admin = Usuario.objects.create(
+    username='admin',
+    email='admin@banco.com',
+    tipo_usuario='ADMINISTRADOR',
+    esta_activo=True,
+    is_staff=True,
+    is_superuser=True
+)
+admin.set_password('admin123')
+admin.save()
+
+# Crear usuario empleado
+empleado = Usuario.objects.create(
+    username='empleado1',
+    email='empleado1@banco.com',
+    tipo_usuario='EMPLEADO',
+    esta_activo=True
+)
+empleado.set_password('empleado123')
+empleado.save()
+
+# Desbloquear usuario
+user = Usuario.objects.get(username='empleado1')
+user.desbloquear()
+
+# Cambiar contraseña
+user = Usuario.objects.get(username='admin')
+user.set_password('nuevapassword')
+user.save()
+
+
+# =====================================================
+# DATOS DE PRUEBA (Django Shell)
+# =====================================================
+
+from clientes.models import Cliente
+from cuentas.models import Cuenta
+from core.models import Usuario, TipoCambio
+from django.utils import timezone
+from decimal import Decimal
+
+# Crear tipo de cambio del día
+usuario = Usuario.objects.first()
+TipoCambio.objects.create(
+    fecha=timezone.now().date(),
+    compra=Decimal('3.750'),
+    venta=Decimal('3.755'),
+    usuario_registro=usuario
+)
+
+# Crear cliente de prueba (Persona Natural)
+cliente = Cliente.objects.create(
+    tipo_cliente='NATURAL',
+    tipo_documento='DNI',
+    numero_documento='12345678',
+    nombres='JUAN',
+    apellido_paterno='PEREZ',
+    apellido_materno='GARCIA',
+    direccion='AV. PRUEBA 123',
+    telefono='999888777',
+    email='juan@example.com'
+)
+
+# Crear cuenta de ahorro
+cuenta = Cuenta.objects.create(
+    cliente=cliente,
+    tipo_cuenta='AHORRO',
+    moneda='SOLES',
+    saldo=Decimal('1000.00'),
+    usuario_apertura=usuario
+)
+
+
+# =====================================================
+# CONSULTAS ÚTILES (Django Shell)
+# =====================================================
+
+# Listar todos los clientes
+from clientes.models import Cliente
+Cliente.objects.all()
+
+# Buscar cliente por documento
+Cliente.objects.get(numero_documento='12345678')
+
+# Listar cuentas activas
+from cuentas.models import Cuenta
+Cuenta.objects.filter(esta_activa=True)
+
+# Listar movimientos del día
+from operaciones.models import Movimiento
+from django.utils import timezone
+hoy = timezone.now().date()
+Movimiento.objects.filter(fecha_hora__date=hoy)
+
+# Sumar depósitos del día
+from django.db.models import Sum
+Movimiento.objects.filter(
+    fecha_hora__date=hoy,
+    tipo_movimiento='DEPOSITO'
+).aggregate(Sum('monto'))
+
+# Cuentas embargadas
+Cuenta.objects.filter(embargo_total=True)
+
+# Usuarios bloqueados
+from core.models import Usuario
+Usuario.objects.filter(bloqueado=True)
+
+
+# =====================================================
+# LIMPIEZA Y MANTENIMIENTO
+# =====================================================
+
+# Eliminar sesiones expiradas
+python manage.py clearsessions
+
+# Eliminar archivos estáticos antiguos
+python manage.py collectstatic --clear --noinput
+
+# Verificar problemas en el proyecto
+python manage.py check
+
+# Optimizar base de datos MySQL (ejecutar en MySQL)
+# OPTIMIZE TABLE clientes, cuentas, movimientos;
+
+
+# =====================================================
+# BACKUP Y RESTAURACIÓN
+# =====================================================
+
+# Hacer backup de la base de datos
+mysqldump -u root -p banco_db > backup_banco_$(date +%Y%m%d).sql
+
+# Restaurar backup
+mysql -u root -p banco_db < backup_banco_20240101.sql
+
+# Exportar datos a JSON (fixtures)
+python manage.py dumpdata > backup_data.json
+python manage.py dumpdata clientes > backup_clientes.json
+python manage.py dumpdata cuentas > backup_cuentas.json
+
+# Importar datos desde JSON
+python manage.py loaddata backup_data.json
+
+
+# =====================================================
+# TESTING Y DEBUGGING
+# =====================================================
+
+# Ejecutar tests (cuando se implementen)
+python manage.py test
+
+# Ejecutar tests con verbose
+python manage.py test --verbosity=2
+
+# Ejecutar tests de una app específica
+python manage.py test clientes
+
+# Ver SQL generado por las migraciones
+python manage.py sqlmigrate clientes 0001
+
+# Modo debug (ya configurado en settings.py)
+# DEBUG=True en .env
+
+
+# =====================================================
+# PRODUCCIÓN
+# =====================================================
+
+# Recolectar archivos estáticos para producción
+python manage.py collectstatic --no-input
+
+# Ejecutar con Gunicorn (instalar: pip install gunicorn)
+gunicorn banco.wsgi:application --bind 0.0.0.0:8000
+
+# Ejecutar con uWSGI (instalar: pip install uwsgi)
+uwsgi --http :8000 --module banco.wsgi
+
+# Crear archivo de requirements para producción
+pip freeze > requirements.txt
+
+
+# =====================================================
+# TAREAS DIARIAS RECOMENDADAS
+# =====================================================
+
+# 1. Configurar tipo de cambio del día (OBLIGATORIO)
+#    Hacerlo desde: Dashboard > Tipo de Cambio
+
+# 2. Backup de base de datos
+mysqldump -u root -p banco_db > backup_diario.sql
+
+# 3. Revisar logs de errores
+#    Los logs aparecen en la consola donde corre el servidor
+
+# 4. Limpiar sesiones expiradas (semanal)
+python manage.py clearsessions
+
+
+# =====================================================
+# RESOLUCIÓN DE PROBLEMAS COMUNES
+# =====================================================
+
+# Error: "No such table"
+python manage.py migrate --run-syncdb
+
+# Error: "Duplicate entry"
+# Revisar que no haya datos duplicados en la BD
+
+# Error: "CSRF verification failed"
+# Verificar que {% csrf_token %} esté en todos los formularios
+
+# Error: "OperationalError: MySQL server has gone away"
+# Aumentar wait_timeout en MySQL:
+# SET GLOBAL wait_timeout=28800;
+
+# Error: Sesión no expira
+# Verificar middleware SessionTimeoutMiddleware en MIDDLEWARE
+
+# Error: No se puede hacer login
+# Verificar que el usuario no esté bloqueado:
+# user.desbloquear() en Django shell
+
+
+# =====================================================
+# INFORMACIÓN DEL SISTEMA
+# =====================================================
+
+# Ver versión de Django
+python -m django --version
+
+# Ver versión de Python
+python --version
+
+# Ver paquetes instalados
+pip list
+
+# Ver configuración actual
+python manage.py diffsettings
+
+# Ver rutas disponibles
+python manage.py show_urls  # Requiere: pip install django-extensions

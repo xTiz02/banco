@@ -1,0 +1,332 @@
+{% extends 'base.html' %}
+
+{% block title %}Resumen de Operaciones del Día - Sistema Bancario{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+    <h1 class="h2"><i class="bi bi-file-earmark-text"></i> Resumen de Operaciones del Día</h1>
+    <div class="btn-toolbar mb-2 mb-md-0">
+        <button onclick="window.print()" class="btn btn-outline-primary">
+            <i class="bi bi-printer"></i> Imprimir
+        </button>
+    </div>
+</div>
+
+<!-- Información del Día -->
+<div class="row mb-4">
+    <div class="col-md-12">
+        <div class="card">
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <h5>Fecha del Reporte</h5>
+                        <p class="mb-0"><strong>{{ fecha|date:"l, d de F de Y" }}</strong></p>
+                    </div>
+                    <div class="col-md-6 text-end">
+                        {% if tipo_cambio %}
+                        <h5>Tipo de Cambio</h5>
+                        <p class="mb-0">
+                            <strong>Compra:</strong> {{ tipo_cambio.compra }} | 
+                            <strong>Venta:</strong> {{ tipo_cambio.venta }}
+                        </p>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Resumen General -->
+<div class="row mb-4">
+    <div class="col-md-12">
+        <div class="card shadow">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0"><i class="bi bi-bar-chart"></i> Resumen General</h5>
+            </div>
+            <div class="card-body">
+                <div class="row text-center">
+                    <div class="col-md-3">
+                        <div class="card border-primary">
+                            <div class="card-body">
+                                <i class="bi bi-calculator" style="font-size: 2rem; color: #0d6efd;"></i>
+                                <h2 class="mt-2">{{ total_operaciones }}</h2>
+                                <p class="text-muted mb-0">Total Operaciones</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="card border-success">
+                            <div class="card-body">
+                                <i class="bi bi-arrow-down-circle" style="font-size: 2rem; color: #198754;"></i>
+                                <h2 class="mt-2">{{ cantidad_depositos }}</h2>
+                                <p class="text-muted mb-0">Depósitos</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="card border-warning">
+                            <div class="card-body">
+                                <i class="bi bi-arrow-up-circle" style="font-size: 2rem; color: #ffc107;"></i>
+                                <h2 class="mt-2">{{ cantidad_retiros }}</h2>
+                                <p class="text-muted mb-0">Retiros</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="card border-info">
+                            <div class="card-body">
+                                <i class="bi bi-arrow-left-right" style="font-size: 2rem; color: #0dcaf0;"></i>
+                                <h2 class="mt-2">{{ cantidad_transferencias }}</h2>
+                                <p class="text-muted mb-0">Transferencias</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Detalle de Operaciones -->
+<div class="row mb-4">
+    <div class="col-md-6">
+        <div class="card shadow">
+            <div class="card-header bg-success text-white">
+                <h5 class="mb-0"><i class="bi bi-arrow-down-circle"></i> Depósitos</h5>
+            </div>
+            <div class="card-body">
+                <table class="table table-sm">
+                    <tbody>
+                        <tr>
+                            <td><strong>Soles:</strong></td>
+                            <td class="text-end">S/ {{ depositos_soles|floatformat:2 }}</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Dólares:</strong></td>
+                            <td class="text-end">$ {{ depositos_dolares|floatformat:2 }}</td>
+                        </tr>
+                        <tr class="table-success">
+                            <td><strong>Total en Soles:</strong></td>
+                            <td class="text-end"><strong>S/ {{ depositos_total_soles|floatformat:2 }}</strong></td>
+                        </tr>
+                        <tr>
+                            <td><strong>Cantidad:</strong></td>
+                            <td class="text-end">{{ cantidad_depositos }} operaciones</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-6">
+        <div class="card shadow">
+            <div class="card-header bg-warning text-dark">
+                <h5 class="mb-0"><i class="bi bi-arrow-up-circle"></i> Retiros</h5>
+            </div>
+            <div class="card-body">
+                <table class="table table-sm">
+                    <tbody>
+                        <tr>
+                            <td><strong>Soles:</strong></td>
+                            <td class="text-end">S/ {{ retiros_soles|floatformat:2 }}</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Dólares:</strong></td>
+                            <td class="text-end">$ {{ retiros_dolares|floatformat:2 }}</td>
+                        </tr>
+                        <tr class="table-warning">
+                            <td><strong>Total en Soles:</strong></td>
+                            <td class="text-end"><strong>S/ {{ retiros_total_soles|floatformat:2 }}</strong></td>
+                        </tr>
+                        <tr>
+                            <td><strong>Cantidad:</strong></td>
+                            <td class="text-end">{{ cantidad_retiros }} operaciones</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Otras Operaciones -->
+<div class="row mb-4">
+    <div class="col-md-12">
+        <div class="card shadow">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="bi bi-list-check"></i> Otras Operaciones</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-4">
+                        <ul class="list-group">
+                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                Transferencias
+                                <span class="badge bg-info rounded-pill">{{ cantidad_transferencias }}</span>
+                            </li>
+                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                Aperturas de Cuenta
+                                <span class="badge bg-primary rounded-pill">{{ aperturas_hoy }}</span>
+                            </li>
+                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                Cierres de Cuenta
+                                <span class="badge bg-secondary rounded-pill">{{ cierres_hoy }}</span>
+                            </li>
+                        </ul>
+                    </div>
+                    <div class="col-md-4">
+                        <ul class="list-group">
+                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                Embargos
+                                <span class="badge bg-danger rounded-pill">{{ embargos_hoy }}</span>
+                            </li>
+                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                Desembargos
+                                <span class="badge bg-success rounded-pill">{{ desembargos_hoy }}</span>
+                            </li>
+                        </ul>
+                    </div>
+                    <div class="col-md-4">
+                        <ul class="list-group">
+                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                Cancelaciones Plazo Fijo
+                                <span class="badge bg-danger rounded-pill">{{ cancelaciones_plazo }}</span>
+                            </li>
+                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                Renovaciones Plazo Fijo
+                                <span class="badge bg-success rounded-pill">{{ renovaciones_plazo }}</span>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Operaciones por Usuario -->
+<div class="row mb-4">
+    <div class="col-md-6">
+        <div class="card shadow">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="bi bi-people"></i> Operaciones por Usuario</h5>
+            </div>
+            <div class="card-body">
+                {% if operaciones_por_usuario %}
+                <table class="table table-sm table-hover">
+                    <thead>
+                        <tr>
+                            <th>Usuario</th>
+                            <th class="text-end">Cantidad</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for op in operaciones_por_usuario %}
+                        <tr>
+                            <td>{{ op.usuario__first_name|default:op.usuario__username }}</td>
+                            <td class="text-end"><span class="badge bg-primary">{{ op.cantidad }}</span></td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+                {% else %}
+                <p class="text-muted text-center">No hay datos</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-6">
+        <div class="card shadow">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="bi bi-graph-up"></i> Operaciones por Tipo</h5>
+            </div>
+            <div class="card-body">
+                {% if operaciones_por_tipo %}
+                <table class="table table-sm table-hover">
+                    <thead>
+                        <tr>
+                            <th>Tipo de Operación</th>
+                            <th class="text-end">Cantidad</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for op in operaciones_por_tipo %}
+                        <tr>
+                            <td>{{ op.tipo_movimiento }}</td>
+                            <td class="text-end"><span class="badge bg-secondary">{{ op.cantidad }}</span></td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+                {% else %}
+                <p class="text-muted text-center">No hay datos</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Últimas Operaciones -->
+<div class="row">
+    <div class="col-md-12">
+        <div class="card shadow">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="bi bi-clock-history"></i> Últimas Operaciones</h5>
+            </div>
+            <div class="card-body">
+                {% if ultimas_operaciones %}
+                <div class="table-responsive">
+                    <table class="table table-sm table-hover">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Hora</th>
+                                <th>Tipo</th>
+                                <th>Cuenta</th>
+                                <th>Monto</th>
+                                <th>Usuario</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for mov in ultimas_operaciones %}
+                            <tr>
+                                <td>{{ mov.fecha_hora|date:"H:i:s" }}</td>
+                                <td>
+                                    <span class="badge 
+                                        {% if mov.tipo_movimiento == 'DEPOSITO' %}bg-success
+                                        {% elif mov.tipo_movimiento == 'RETIRO' %}bg-warning
+                                        {% else %}bg-info{% endif %}">
+                                        {{ mov.get_tipo_movimiento_display }}
+                                    </span>
+                                </td>
+                                <td><code>{{ mov.cuenta.numero_cuenta }}</code></td>
+                                <td>{{ mov.cuenta.get_moneda_display }} {{ mov.monto|floatformat:2 }}</td>
+                                <td>{{ mov.usuario.username }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <p class="text-muted text-center">No hay operaciones registradas hoy</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    @media print {
+        .sidebar, .navbar, .btn-toolbar, .border-bottom {
+            display: none !important;
+        }
+        .col-md-10 {
+            margin-left: 0 !important;
+        }
+    }
+</style>
+{% endblock %}

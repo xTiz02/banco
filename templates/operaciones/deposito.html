@@ -1,0 +1,158 @@
+{% extends 'base.html' %}
+{% load crispy_forms_tags %}
+
+{% block title %}Realizar Depósito - Sistema Bancario{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+    <h1 class="h2"><i class="bi bi-arrow-down-circle"></i> Realizar Depósito</h1>
+    <div class="btn-toolbar mb-2 mb-md-0">
+        <a href="{% url 'core:dashboard' %}" class="btn btn-outline-secondary">
+            <i class="bi bi-arrow-left"></i> Volver
+        </a>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-lg-8 mx-auto">
+        <!-- Información Importante -->
+        <div class="alert alert-info">
+            <h5><i class="bi bi-info-circle"></i> Información Importante</h5>
+            <ul class="mb-0">
+                <li>Los depósitos pueden realizarse en cuentas de ahorro y corrientes activas</li>
+                <li>Para depósitos <strong>mayores a S/ 2000</strong> o su equivalente se requiere:
+                    <ul>
+                        <li>Clave de autorización</li>
+                        <li>Origen de los fondos</li>
+                    </ul>
+                </li>
+            </ul>
+        </div>
+
+        <div class="card shadow">
+            <div class="card-body">
+                <form method="post" id="depositoForm">
+                    {% csrf_token %}
+                    
+                    <!-- Cuenta -->
+                    <div class="mb-3">
+                        <label for="{{ form.cuenta.id_for_label }}" class="form-label required-field">
+                            Cuenta Destino
+                        </label>
+                        {{ form.cuenta }}
+                        <small class="form-text text-muted">
+                            Seleccione la cuenta donde realizar el depósito
+                        </small>
+                        {% if form.cuenta.errors %}
+                            <div class="text-danger">{{ form.cuenta.errors }}</div>
+                        {% endif %}
+                    </div>
+
+                    <!-- Monto -->
+                    <div class="mb-3">
+                        <label for="{{ form.monto.id_for_label }}" class="form-label required-field">
+                            Monto a Depositar
+                        </label>
+                        <div class="input-group">
+                            <span class="input-group-text"><i class="bi bi-cash"></i></span>
+                            {{ form.monto }}
+                        </div>
+                        {% if form.monto.errors %}
+                            <div class="text-danger">{{ form.monto.errors }}</div>
+                        {% endif %}
+                    </div>
+
+                    <hr class="my-4">
+
+                    <!-- Campos para Depósitos Grandes -->
+                    <div id="camposAutorizacion" style="display: none;">
+                        <div class="alert alert-warning">
+                            <i class="bi bi-exclamation-triangle"></i>
+                            <strong>Depósito mayor a S/ 2000</strong><br>
+                            Complete los siguientes campos obligatorios:
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="{{ form.clave_autorizacion.id_for_label }}" class="form-label required-field">
+                                Clave de Autorización
+                            </label>
+                            {{ form.clave_autorizacion }}
+                            {% if form.clave_autorizacion.errors %}
+                                <div class="text-danger">{{ form.clave_autorizacion.errors }}</div>
+                            {% endif %}
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="{{ form.origen_fondos.id_for_label }}" class="form-label required-field">
+                                Origen de Fondos
+                            </label>
+                            {{ form.origen_fondos }}
+                            <small class="form-text text-muted">
+                                Describa el origen de los fondos (ej: Venta de inmueble, Préstamo personal, etc.)
+                            </small>
+                            {% if form.origen_fondos.errors %}
+                                <div class="text-danger">{{ form.origen_fondos.errors }}</div>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <!-- Botones -->
+                    <hr class="my-4">
+                    <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                        <a href="{% url 'core:dashboard' %}" class="btn btn-secondary">
+                            <i class="bi bi-x-circle"></i> Cancelar
+                        </a>
+                        <button type="submit" class="btn btn-success">
+                            <i class="bi bi-check-circle"></i> Realizar Depósito
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function checkMontoDeposito() {
+    const montoInput = document.getElementById('{{ form.monto.id_for_label }}');
+    const cuentaSelect = document.getElementById('{{ form.cuenta.id_for_label }}');
+    const camposAutorizacion = document.getElementById('camposAutorizacion');
+    
+    if (montoInput && cuentaSelect && camposAutorizacion) {
+        const monto = parseFloat(montoInput.value) || 0;
+        const cuentaOption = cuentaSelect.options[cuentaSelect.selectedIndex];
+        
+        // Por simplicidad, asumimos conversión básica si es necesario
+        // En producción, deberías obtener el tipo de cambio y moneda de la cuenta
+        const limite = 2000;
+        
+        if (monto > limite) {
+            camposAutorizacion.style.display = 'block';
+            document.getElementById('{{ form.clave_autorizacion.id_for_label }}').required = true;
+            document.getElementById('{{ form.origen_fondos.id_for_label }}').required = true;
+        } else {
+            camposAutorizacion.style.display = 'none';
+            document.getElementById('{{ form.clave_autorizacion.id_for_label }}').required = false;
+            document.getElementById('{{ form.origen_fondos.id_for_label }}').required = false;
+        }
+    }
+}
+
+// Inicializar al cargar
+document.addEventListener('DOMContentLoaded', function() {
+    const montoInput = document.getElementById('{{ form.monto.id_for_label }}');
+    const cuentaSelect = document.getElementById('{{ form.cuenta.id_for_label }}');
+    
+    if (montoInput) {
+        montoInput.addEventListener('input', checkMontoDeposito);
+        montoInput.addEventListener('change', checkMontoDeposito);
+    }
+    
+    if (cuentaSelect) {
+        cuentaSelect.addEventListener('change', checkMontoDeposito);
+    }
+});
+</script>
+{% endblock %}

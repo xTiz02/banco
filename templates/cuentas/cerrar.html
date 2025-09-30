@@ -1,0 +1,155 @@
+{% extends 'base.html' %}
+
+{% block title %}Cerrar Cuenta - Sistema Bancario{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+    <h1 class="h2"><i class="bi bi-x-circle"></i> Cerrar Cuenta</h1>
+    <div class="btn-toolbar mb-2 mb-md-0">
+        <a href="{% url 'cuentas:detalle_cuenta' cuenta.id %}" class="btn btn-outline-secondary">
+            <i class="bi bi-arrow-left"></i> Volver
+        </a>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-lg-8 mx-auto">
+        <!-- Alerta de Advertencia -->
+        <div class="alert alert-danger">
+            <h5><i class="bi bi-exclamation-triangle"></i> Advertencia</h5>
+            <p class="mb-0">
+                El cierre de cuenta es una operación <strong>irreversible</strong>. 
+                Una vez cerrada, la cuenta no podrá ser utilizada nuevamente.
+            </p>
+        </div>
+
+        <!-- Información de la Cuenta -->
+        <div class="card mb-4">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0">Información de la Cuenta a Cerrar</h5>
+            </div>
+            <div class="card-body">
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <strong>Número de Cuenta:</strong><br>
+                        <code class="fs-5">{{ cuenta.numero_cuenta }}</code>
+                    </div>
+                    <div class="col-md-6">
+                        <strong>Tipo:</strong><br>
+                        <span class="badge bg-primary fs-6">{{ cuenta.get_tipo_cuenta_display }}</span>
+                    </div>
+                </div>
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <strong>Titular:</strong><br>
+                        {{ cuenta.cliente.get_nombre_completo }}
+                    </div>
+                    <div class="col-md-6">
+                        <strong>Documento:</strong><br>
+                        {{ cuenta.cliente.get_tipo_documento_display }}: {{ cuenta.cliente.numero_documento }}
+                    </div>
+                </div>
+                <hr>
+                <div class="row">
+                    <div class="col-md-4">
+                        <strong>Saldo Actual:</strong><br>
+                        <h4 class="{% if cuenta.saldo > 0 %}text-danger{% else %}text-success{% endif %}">
+                            {{ cuenta.get_moneda_display }} {{ cuenta.saldo|floatformat:2 }}
+                        </h4>
+                    </div>
+                    <div class="col-md-4">
+                        <strong>Embargado:</strong><br>
+                        <h4 class="{% if cuenta.monto_embargado > 0 %}text-danger{% else %}text-muted{% endif %}">
+                            {{ cuenta.get_moneda_display }} {{ cuenta.monto_embargado|floatformat:2 }}
+                        </h4>
+                    </div>
+                    <div class="col-md-4">
+                        <strong>Estado:</strong><br>
+                        <span class="badge bg-{{ cuenta.estado|lower }} fs-6">{{ cuenta.get_estado_display }}</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Validaciones -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="mb-0">Validaciones para Cierre</h5>
+            </div>
+            <div class="card-body">
+                <ul class="list-group">
+                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                        Saldo en Cero
+                        {% if cuenta.saldo == 0 %}
+                            <span class="badge bg-success rounded-pill">
+                                <i class="bi bi-check-circle"></i> Cumple
+                            </span>
+                        {% else %}
+                            <span class="badge bg-danger rounded-pill">
+                                <i class="bi bi-x-circle"></i> No Cumple
+                            </span>
+                        {% endif %}
+                    </li>
+                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                        Sin Embargos
+                        {% if cuenta.monto_embargado == 0 %}
+                            <span class="badge bg-success rounded-pill">
+                                <i class="bi bi-check-circle"></i> Cumple
+                            </span>
+                        {% else %}
+                            <span class="badge bg-danger rounded-pill">
+                                <i class="bi bi-x-circle"></i> No Cumple
+                            </span>
+                        {% endif %}
+                    </li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- Formulario -->
+        {% if cuenta.puede_cerrarse %}
+        <div class="card shadow border-danger">
+            <div class="card-body">
+                <form method="post">
+                    {% csrf_token %}
+                    
+                    <div class="mb-3">
+                        <div class="form-check">
+                            {{ form.confirmar }}
+                            <label class="form-check-label" for="{{ form.confirmar.id_for_label }}">
+                                <strong>{{ form.confirmar.label }}</strong>
+                            </label>
+                        </div>
+                        <small class="form-text text-danger">
+                            {{ form.confirmar.help_text }}
+                        </small>
+                        {% if form.confirmar.errors %}
+                            <div class="text-danger">{{ form.confirmar.errors }}</div>
+                        {% endif %}
+                    </div>
+
+                    <hr class="my-4">
+                    
+                    <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                        <a href="{% url 'cuentas:detalle_cuenta' cuenta.id %}" class="btn btn-secondary">
+                            <i class="bi bi-arrow-left"></i> Cancelar
+                        </a>
+                        <button type="submit" class="btn btn-danger">
+                            <i class="bi bi-x-circle"></i> Cerrar Cuenta Definitivamente
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+        {% else %}
+        <div class="alert alert-warning">
+            <h5><i class="bi bi-exclamation-triangle"></i> No se puede cerrar la cuenta</h5>
+            <p class="mb-0">
+                La cuenta no cumple con los requisitos para ser cerrada. 
+                Debe tener saldo cero y no tener embargos activos.
+            </p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

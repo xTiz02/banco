@@ -1,0 +1,179 @@
+{% extends 'base.html' %}
+{% load crispy_forms_tags %}
+
+{% block title %}Apertura de Cuenta - Sistema Bancario{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+    <h1 class="h2"><i class="bi bi-plus-circle"></i> Apertura de Cuenta</h1>
+    <div class="btn-toolbar mb-2 mb-md-0">
+        <a href="{% url 'cuentas:lista_cuentas' %}" class="btn btn-outline-secondary">
+            <i class="bi bi-arrow-left"></i> Volver
+        </a>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-lg-8 mx-auto">
+        <div class="card shadow">
+            <div class="card-body">
+                <form method="post" id="cuentaForm">
+                    {% csrf_token %}
+                    
+                    <!-- Cliente -->
+                    <div class="mb-3">
+                        <label for="{{ form.cliente.id_for_label }}" class="form-label required-field">
+                            Cliente
+                        </label>
+                        {{ form.cliente }}
+                        <small class="form-text text-muted">
+                            Seleccione el cliente titular de la cuenta
+                        </small>
+                        {% if form.cliente.errors %}
+                            <div class="text-danger">{{ form.cliente.errors }}</div>
+                        {% endif %}
+                    </div>
+
+                    <hr class="my-4">
+
+                    <!-- Tipo de Cuenta y Moneda -->
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label for="{{ form.tipo_cuenta.id_for_label }}" class="form-label required-field">
+                                Tipo de Cuenta
+                            </label>
+                            {{ form.tipo_cuenta }}
+                            {% if form.tipo_cuenta.errors %}
+                                <div class="text-danger">{{ form.tipo_cuenta.errors }}</div>
+                            {% endif %}
+                        </div>
+                        <div class="col-md-6">
+                            <label for="{{ form.moneda.id_for_label }}" class="form-label required-field">
+                                Moneda
+                            </label>
+                            {{ form.moneda }}
+                            {% if form.moneda.errors %}
+                                <div class="text-danger">{{ form.moneda.errors }}</div>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <!-- Campos para Ahorro y Corriente -->
+                    <div id="camposAhorroCorriente">
+                        <div class="mb-3">
+                            <label for="{{ form.saldo.id_for_label }}" class="form-label">
+                                Saldo Inicial (Opcional)
+                            </label>
+                            {{ form.saldo }}
+                            <small class="form-text text-muted">
+                                Puede aperturar con saldo 0
+                            </small>
+                            {% if form.saldo.errors %}
+                                <div class="text-danger">{{ form.saldo.errors }}</div>
+                            {% endif %}
+                        </div>
+
+                        <div id="campoSobregiro" style="display: none;">
+                            <div class="mb-3">
+                                <label for="{{ form.monto_sobregiro.id_for_label }}" class="form-label">
+                                    Monto de Sobregiro
+                                </label>
+                                {{ form.monto_sobregiro }}
+                                <small class="form-text text-muted">
+                                    Solo para cuentas corrientes
+                                </small>
+                                {% if form.monto_sobregiro.errors %}
+                                    <div class="text-danger">{{ form.monto_sobregiro.errors }}</div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Campos para Plazo Fijo -->
+                    <div id="camposPlazoFijo" style="display: none;">
+                        <div class="alert alert-info">
+                            <i class="bi bi-info-circle"></i> 
+                            Las cuentas a plazo fijo requieren monto inicial, plazo y tasa de interés
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="{{ form.monto_inicial.id_for_label }}" class="form-label required-field">
+                                Monto Inicial
+                            </label>
+                            {{ form.monto_inicial }}
+                            {% if form.monto_inicial.errors %}
+                                <div class="text-danger">{{ form.monto_inicial.errors }}</div>
+                            {% endif %}
+                        </div>
+
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label for="{{ form.plazo_meses.id_for_label }}" class="form-label required-field">
+                                    Plazo (Meses)
+                                </label>
+                                {{ form.plazo_meses }}
+                                {% if form.plazo_meses.errors %}
+                                    <div class="text-danger">{{ form.plazo_meses.errors }}</div>
+                                {% endif %}
+                            </div>
+                            <div class="col-md-6">
+                                <label for="{{ form.tasa_interes_mensual.id_for_label }}" class="form-label required-field">
+                                    Tasa de Interés Mensual (%)
+                                </label>
+                                {{ form.tasa_interes_mensual }}
+                                {% if form.tasa_interes_mensual.errors %}
+                                    <div class="text-danger">{{ form.tasa_interes_mensual.errors }}</div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Botones -->
+                    <hr class="my-4">
+                    <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                        <a href="{% url 'cuentas:lista_cuentas' %}" class="btn btn-secondary">
+                            <i class="bi bi-x-circle"></i> Cancelar
+                        </a>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="bi bi-check-circle"></i> Aperturar Cuenta
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function toggleTipoCuenta() {
+    const tipoCuenta = document.getElementById('{{ form.tipo_cuenta.id_for_label }}').value;
+    const camposAhorroCorriente = document.getElementById('camposAhorroCorriente');
+    const camposPlazoFijo = document.getElementById('camposPlazoFijo');
+    const campoSobregiro = document.getElementById('campoSobregiro');
+    
+    if (tipoCuenta === 'PLAZO') {
+        camposAhorroCorriente.style.display = 'none';
+        camposPlazoFijo.style.display = 'block';
+        campoSobregiro.style.display = 'none';
+    } else {
+        camposAhorroCorriente.style.display = 'block';
+        camposPlazoFijo.style.display = 'none';
+        
+        if (tipoCuenta === 'CORRIENTE') {
+            campoSobregiro.style.display = 'block';
+        } else {
+            campoSobregiro.style.display = 'none';
+        }
+    }
+}
+
+// Inicializar al cargar
+document.addEventListener('DOMContentLoaded', function() {
+    toggleTipoCuenta();
+    
+    document.getElementById('{{ form.tipo_cuenta.id_for_label }}').addEventListener('change', toggleTipoCuenta);
+});
+</script>
+{% endblock %}
