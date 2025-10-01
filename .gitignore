@@ -1,0 +1,76 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.so
+*.egg
+*.egg-info/
+*.eggs/
+*.manifest
+*.spec
+
+# Entornos virtuales
+venv/
+env/
+.venv/
+ENV/
+env.bak/
+venv.bak/
+
+# Archivos de configuración de IDE
+.vscode/
+.idea/
+*.sublime-workspace
+*.sublime-project
+
+# Archivos de sistema
+.DS_Store
+Thumbs.db
+
+# Archivos de logs
+*.log
+*.pot
+
+# Archivos de compilación / cachés
+*.pyc
+*.pyo
+*.pyd
+*.db
+*.sqlite3
+db.sqlite3
+
+# Migraciones (opcional, si no quieres versionarlas hasta estar seguras)
+# **aunque lo recomendable es sí versionarlas**
+# */migrations/*.py
+# !*/migrations/__init__.py
+
+# Archivos de coverage / testing
+.coverage
+coverage.xml
+htmlcov/
+.tox/
+.pytest_cache/
+nosetests.xml
+*.cover
+*.coverage
+.cache
+junit.xml
+
+# Archivos de Django
+*.mo
+*.pot
+local_settings.py
+settings_local.py
+media/
+staticfiles/
+static/
+
+# Archivos de Docker (si usas)
+*.pid
+*.seed
+*.bak
+
+# Archivos de entorno
+.env
+*.env

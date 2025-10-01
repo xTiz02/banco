@@ -1,0 +1,31 @@
+{% extends 'base.html' %}
+{% load crispy_forms_tags %}
+
+{% block title %}Iniciar Sesión - Sistema Bancario{% endblock %}
+
+{% block extra_content  %}
+<div class="container">
+    <div class="row justify-content-center mt-5">
+        <div class="col-md-5">
+            <div class="card shadow">
+                <div class="card-header text-center">
+                    <h3><i class="bi bi-bank"></i> Sistema Bancario</h3>
+                    <p class="mb-0">Iniciar Sesión</p>
+                </div>
+                <div class="card-body p-4">
+                    <form method="post">
+                        {% csrf_token %}
+                        {{ form|crispy }}
+                        <button type="submit" class="btn btn-primary w-100 mt-3">
+                            <i class="bi bi-box-arrow-in-right"></i> Iniciar Sesión
+                        </button>
+                    </form>
+                </div>
+                <div class="card-footer text-muted text-center">
+                    <small>Versión 1.0</small>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
