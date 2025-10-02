@@ -49,7 +49,7 @@ Debe instalarse sin errores.
 Abrir shell de Django
 'python manage.py shell'
 
-# Crear usuarios de prueba
+# Crear usuarios de prueba (copiar y pegar todo en django shell)
 from core.models import Usuario
 
 admin = Usuario.objects.create(
