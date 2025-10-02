@@ -99,13 +99,13 @@ empleado.set_password('empleado123')
 empleado.save()
 
 # Desbloquear usuario
-user = Usuario.objects.get(username='empleado1')
-user.desbloquear()
+# user = Usuario.objects.get(username='empleado1')
+# user.desbloquear()
 
 # Cambiar contraseña
-user = Usuario.objects.get(username='admin')
-user.set_password('nuevapassword')
-user.save()
+# user = Usuario.objects.get(username='admin')
+# user.set_password('nuevapassword')
+# user.save()
 
 
 # =====================================================
