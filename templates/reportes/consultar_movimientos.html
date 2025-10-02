@@ -1,0 +1,319 @@
+{% extends 'base.html' %}
+
+{% block title %}Consultar Movimientos - Sistema Bancario{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+    <h1 class="h2"><i class="bi bi-search"></i> Consultar Movimientos de Cuenta</h1>
+    <div class="btn-toolbar mb-2 mb-md-0">
+        <a href="{% url 'core:dashboard' %}" class="btn btn-outline-secondary">
+            <i class="bi bi-arrow-left"></i> Dashboard
+        </a>
+    </div>
+</div>
+
+<!-- Instrucciones -->
+<div class="row mb-4">
+    <div class="col-lg-12">
+        <div class="alert alert-info">
+            <h5><i class="bi bi-info-circle"></i> Instrucciones</h5>
+            <p class="mb-0">
+                Busque y seleccione una cuenta para consultar sus últimos 20 movimientos.
+                Puede buscar por número de cuenta, código de cliente o número de documento.
+            </p>
+        </div>
+    </div>
+</div>
+
+<!-- Buscador de Cuenta -->
+<div class="row mb-4">
+    <div class="col-lg-12">
+        <div class="card shadow">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0"><i class="bi bi-search"></i> Buscar Cuenta</h5>
+            </div>
+            <div class="card-body">
+                <form method="get" id="buscarCuentaForm">
+                    <div class="row">
+                        <div class="col-md-8">
+                            <label for="busqueda" class="form-label">Buscar por Número de Cuenta, Código o Documento</label>
+                            <input type="text"
+                                   class="form-control form-control-lg"
+                                   id="busqueda"
+                                   name="busqueda"
+                                   placeholder="Ej: 0011000000001, CLI202400001, 12345678"
+                                   value="{{ request.GET.busqueda }}"
+                                   autocomplete="off">
+                            <small class="form-text text-muted">
+                                Ingrese al menos 3 caracteres para buscar
+                            </small>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">&nbsp;</label>
+                            <div class="d-grid">
+                                <button type="button" onclick="buscarCuenta()" class="btn btn-primary btn-lg">
+                                    <i class="bi bi-search"></i> Buscar
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+
+                <!-- Resultados de búsqueda -->
+                <div id="resultadosBusqueda" class="mt-3"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Información de la Cuenta Seleccionada -->
+{% if cuenta %}
+<div class="row mb-4">
+    <div class="col-lg-12">
+        <div class="card shadow border-success">
+            <div class="card-header bg-success text-white">
+                <h5 class="mb-0"><i class="bi bi-credit-card"></i> Cuenta Seleccionada</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-3">
+                        <strong>Número de Cuenta:</strong><br>
+                        <code class="fs-5">{{ cuenta.numero_cuenta }}</code>
+                    </div>
+                    <div class="col-md-3">
+                        <strong>Titular:</strong><br>
+                        <a href="{% url 'clientes:detalle_cliente' cuenta.cliente.id %}">
+                            {{ cuenta.cliente.get_nombre_completo }}
+                        </a>
+                    </div>
+                    <div class="col-md-2">
+                        <strong>Tipo:</strong><br>
+                        <span class="badge
+                            {% if cuenta.tipo_cuenta == 'AHORRO' %}bg-success
+                            {% elif cuenta.tipo_cuenta == 'CORRIENTE' %}bg-primary
+                            {% else %}bg-warning text-dark{% endif %} fs-6">
+                            {{ cuenta.get_tipo_cuenta_display }}
+                        </span>
+                    </div>
+                    <div class="col-md-2">
+                        <strong>Moneda:</strong><br>
+                        {{ cuenta.get_moneda_display }}
+                    </div>
+                    <div class="col-md-2">
+                        <strong>Saldo:</strong><br>
+                        <h5 class="text-primary mb-0">{{ cuenta.saldo|floatformat:2 }}</h5>
+                    </div>
+                </div>
+                <div class="mt-3">
+                    <a href="{% url 'cuentas:detalle_cuenta' cuenta.id %}" class="btn btn-sm btn-outline-primary">
+                        <i class="bi bi-eye"></i> Ver Detalle Completo
+                    </a>
+                    <a href="{% url 'cuentas:movimientos_cuenta' cuenta.id %}" class="btn btn-sm btn-outline-info">
+                        <i class="bi bi-list"></i> Ver Todos los Movimientos
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Últimos 20 Movimientos -->
+<div class="row">
+    <div class="col-lg-12">
+        <div class="card shadow">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="mb-0"><i class="bi bi-clock-history"></i> Últimos 20 Movimientos</h5>
+                <button onclick="window.print()" class="btn btn-sm btn-outline-primary">
+                    <i class="bi bi-printer"></i> Imprimir
+                </button>
+            </div>
+            <div class="card-body">
+                {% if movimientos %}
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead class="table-light">
+                            <tr>
+                                <th>#</th>
+                                <th>Fecha y Hora</th>
+                                <th>Tipo de Movimiento</th>
+                                <th>Descripción</th>
+                                <th class="text-end">Monto</th>
+                                <th class="text-end">Saldo Resultante</th>
+                                <th>Usuario</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for movimiento in movimientos %}
+                            <tr>
+                                <td>{{ forloop.counter }}</td>
+                                <td>
+                                    {{ movimiento.fecha_hora|date:"d/m/Y" }}<br>
+                                    <small class="text-muted">{{ movimiento.fecha_hora|date:"H:i:s" }}</small>
+                                </td>
+                                <td>
+                                    <span class="badge
+                                        {% if movimiento.tipo_movimiento == 'DEPOSITO' %}bg-success
+                                        {% elif movimiento.tipo_movimiento == 'RETIRO' %}bg-warning text-dark
+                                        {% elif movimiento.tipo_movimiento == 'TRANSFERENCIA_ENVIADA' %}bg-danger
+                                        {% elif movimiento.tipo_movimiento == 'TRANSFERENCIA_RECIBIDA' %}bg-info
+                                        {% elif movimiento.tipo_movimiento == 'APERTURA' %}bg-primary
+                                        {% elif movimiento.tipo_movimiento == 'CIERRE' %}bg-secondary
+                                        {% elif 'EMBARGO' in movimiento.tipo_movimiento %}bg-dark
+                                        {% elif 'PLAZO' in movimiento.tipo_movimiento %}bg-warning
+                                        {% else %}bg-secondary{% endif %}">
+                                        {{ movimiento.get_tipo_movimiento_display }}
+                                    </span>
+                                </td>
+                                <td>
+                                    {{ movimiento.descripcion|truncatewords:12 }}
+                                    {% if movimiento.cuenta_destino %}
+                                    <br><small class="text-muted">
+                                        <i class="bi bi-arrow-right"></i> {{ movimiento.cuenta_destino.numero_cuenta }}
+                                    </small>
+                                    {% endif %}
+                                </td>
+                                <td class="text-end">
+                                    {% if movimiento.tipo_movimiento == 'RETIRO' or movimiento.tipo_movimiento == 'TRANSFERENCIA_ENVIADA' %}
+                                        <span class="text-danger fw-bold">- {{ movimiento.monto|floatformat:2 }}</span>
+                                    {% elif movimiento.tipo_movimiento == 'DEPOSITO' or movimiento.tipo_movimiento == 'TRANSFERENCIA_RECIBIDA' %}
+                                        <span class="text-success fw-bold">+ {{ movimiento.monto|floatformat:2 }}</span>
+                                    {% else %}
+                                        <span class="fw-bold">{{ movimiento.monto|floatformat:2 }}</span>
+                                    {% endif %}
+                                </td>
+                                <td class="text-end">
+                                    <strong>{{ movimiento.saldo_nuevo|floatformat:2 }}</strong>
+                                </td>
+                                <td>
+                                    <small>{{ movimiento.usuario.username }}</small>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                        <tfoot class="table-light">
+                            <tr>
+                                <td colspan="5" class="text-end"><strong>Saldo Actual:</strong></td>
+                                <td class="text-end">
+                                    <h5 class="mb-0 text-primary">{{ cuenta.saldo|floatformat:2 }}</h5>
+                                </td>
+                                <td></td>
+                            </tr>
+                        </tfoot>
+                    </table>
+                </div>
+
+                <div class="mt-3">
+                    <p class="text-muted">
+                        <i class="bi bi-info-circle"></i>
+                        Mostrando los últimos 20 movimientos. Para ver el historial completo,
+                        <a href="{% url 'cuentas:movimientos_cuenta' cuenta.id %}">haga clic aquí</a>.
+                    </p>
+                </div>
+                {% else %}
+                <div class="text-center py-5">
+                    <i class="bi bi-inbox" style="font-size: 3rem; color: #ccc;"></i>
+                    <p class="text-muted mt-3">No hay movimientos registrados en esta cuenta</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% else %}
+<div class="row">
+    <div class="col-lg-12">
+        <div class="card">
+            <div class="card-body text-center py-5">
+                <i class="bi bi-search" style="font-size: 4rem; color: #ccc;"></i>
+                <h4 class="mt-3 text-muted">Busque una cuenta para consultar sus movimientos</h4>
+                <p class="text-muted">Utilice el buscador de arriba para encontrar la cuenta</p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function buscarCuenta() {
+    const busqueda = document.getElementById('busqueda').value.trim();
+
+    if (busqueda.length < 3) {
+        alert('Por favor ingrese al menos 3 caracteres para buscar');
+        return;
+    }
+
+    const resultadosDiv = document.getElementById('resultadosBusqueda');
+    resultadosDiv.innerHTML = '<div class="text-center"><div class="spinner-border text-primary" role="status"><span class="visually-hidden">Buscando...</span></div></div>';
+
+    // Realizar búsqueda AJAX
+    fetch(`{% url 'cuentas:buscar_cuenta_ajax' %}?q=${encodeURIComponent(busqueda)}`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.cuentas && data.cuentas.length > 0) {
+                let html = '<div class="list-group mt-3">';
+                data.cuentas.forEach(cuenta => {
+                    html += `
+                        <a href="?cuenta_id=${cuenta.id}" class="list-group-item list-group-item-action">
+                            <div class="row align-items-center">
+                                <div class="col-md-3">
+                                    <strong>Cuenta:</strong><br>
+                                    <code>${cuenta.numero_cuenta}</code>
+                                </div>
+                                <div class="col-md-3">
+                                    <strong>Cliente:</strong><br>
+                                    ${cuenta.cliente}
+                                </div>
+                                <div class="col-md-2">
+                                    <span class="badge bg-primary">${cuenta.tipo_cuenta}</span>
+                                </div>
+                                <div class="col-md-2">
+                                    ${cuenta.moneda}
+                                </div>
+                                <div class="col-md-2">
+                                    <strong>Saldo:</strong> ${cuenta.saldo}
+                                </div>
+                            </div>
+                        </a>
+                    `;
+                });
+                html += '</div>';
+                resultadosDiv.innerHTML = html;
+            } else {
+                resultadosDiv.innerHTML = `
+                    <div class="alert alert-warning mt-3">
+                        <i class="bi bi-exclamation-triangle"></i>
+                        No se encontraron cuentas con esos criterios de búsqueda.
+                    </div>
+                `;
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            resultadosDiv.innerHTML = `
+                <div class="alert alert-danger mt-3">
+                    <i class="bi bi-x-circle"></i>
+                    Error al realizar la búsqueda. Por favor intente nuevamente.
+                </div>
+            `;
+        });
+}
+
+// Permitir búsqueda con Enter
+document.getElementById('busqueda').addEventListener('keypress', function(e) {
+    if (e.key === 'Enter') {
+        e.preventDefault();
+        buscarCuenta();
+    }
+});
+</script>
+
+<style>
+    @media print {
+        .btn-toolbar, .sidebar, .navbar, .border-bottom, .card-header .btn, #buscarCuentaForm {
+            display: none !important;
+        }
+    }
+</style>
+{% endblock %}

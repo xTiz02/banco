@@ -1,0 +1,188 @@
+{% extends 'base.html' %}
+
+{% block title %}Cancelar Plazo Fijo - Sistema Bancario{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+    <h1 class="h2"><i class="bi bi-x-circle"></i> Cancelar Plazo Fijo</h1>
+    <div class="btn-toolbar mb-2 mb-md-0">
+        <a href="{% url 'cuentas:detalle_cuenta' cuenta.id %}" class="btn btn-outline-secondary">
+            <i class="bi bi-arrow-left"></i> Volver
+        </a>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-lg-10 mx-auto">
+        <!-- Alerta de Advertencia -->
+        <div class="alert alert-danger">
+            <h5><i class="bi bi-exclamation-triangle"></i> Advertencia Importante</h5>
+            <ul class="mb-0">
+                <li>La cancelación del plazo fijo es <strong>irreversible</strong></li>
+                <li>Se calculará el interés generado hasta la fecha actual</li>
+                <li>El monto total será acreditado y la cuenta será cerrada</li>
+                <li>No podrá revertir esta operación</li>
+            </ul>
+        </div>
+
+        <!-- Información de la Cuenta -->
+        <div class="row mb-4">
+            <div class="col-md-6">
+                <div class="card shadow border-primary">
+                    <div class="card-header bg-primary text-white">
+                        <h5 class="mb-0"><i class="bi bi-info-circle"></i> Datos del Plazo Fijo</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="mb-3">
+                            <strong>Número de Cuenta:</strong><br>
+                            <code class="fs-5">{{ cuenta.numero_cuenta }}</code>
+                        </div>
+                        <div class="mb-3">
+                            <strong>Titular:</strong><br>
+                            {{ cuenta.cliente.get_nombre_completo }}<br>
+                            <small class="text-muted">{{ cuenta.cliente.get_tipo_documento_display }}: {{ cuenta.cliente.numero_documento }}</small>
+                        </div>
+                        <div class="mb-3">
+                            <strong>Moneda:</strong><br>
+                            {{ cuenta.get_moneda_display }}
+                        </div>
+                        <hr>
+                        <div class="mb-3">
+                            <strong>Fecha de Apertura:</strong><br>
+                            {{ cuenta.fecha_apertura|date:"d/m/Y" }}
+                        </div>
+                        <div class="mb-3">
+                            <strong>Fecha de Vencimiento:</strong><br>
+                            {{ cuenta.fecha_vencimiento|date:"d/m/Y" }}
+                            {% if cuenta.fecha_vencimiento > today %}
+                                <br><span class="badge bg-warning text-dark">Cancelación anticipada</span>
+                            {% endif %}
+                        </div>
+                        <div class="mb-3">
+                            <strong>Plazo:</strong><br>
+                            {{ cuenta.plazo_meses }} meses
+                        </div>
+                        <div class="mb-3">
+                            <strong>Tasa de Interés Mensual:</strong><br>
+                            {{ cuenta.tasa_interes_mensual }}%
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-6">
+                <div class="card shadow border-success">
+                    <div class="card-header bg-success text-white">
+                        <h5 class="mb-0"><i class="bi bi-calculator"></i> Cálculo de Cancelación</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="mb-4">
+                            <strong>Monto Principal:</strong>
+                            <h3 class="text-primary">{{ cuenta.get_moneda_display }} {{ cuenta.saldo|floatformat:2 }}</h3>
+                        </div>
+                        
+                        <div class="mb-4">
+                            <strong>Interés Generado:</strong>
+                            <h3 class="text-success">+ {{ cuenta.get_moneda_display }} {{ interes_generado|floatformat:2 }}</h3>
+                            <small class="text-muted">
+                                Calculado hasta {{ today|date:"d/m/Y" }}
+                            </small>
+                        </div>
+
+                        <hr class="my-4">
+
+                        <div class="alert alert-success mb-0">
+                            <strong>Monto Total a Recibir:</strong>
+                            <h2 class="text-success mb-0">
+                                {{ cuenta.get_moneda_display }} {{ monto_total|floatformat:2 }}
+                            </h2>
+                            <small class="text-muted">
+                                Principal + Intereses
+                            </small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Información Adicional -->
+        <div class="row mb-4">
+            <div class="col-md-12">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="mb-0"><i class="bi bi-info-circle"></i> Información del Cálculo</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-4">
+                                <strong>Días Transcurridos:</strong><br>
+                                <span class="text-muted">Desde apertura hasta hoy</span>
+                            </div>
+                            <div class="col-md-4">
+                                <strong>Tasa Aplicada:</strong><br>
+                                <span class="text-muted">{{ cuenta.tasa_interes_mensual }}% mensual</span>
+                            </div>
+                            <div class="col-md-4">
+                                <strong>Tipo de Cancelación:</strong><br>
+                                {% if cuenta.fecha_vencimiento > today %}
+                                    <span class="badge bg-warning text-dark">Anticipada</span>
+                                {% else %}
+                                    <span class="badge bg-success">Al vencimiento</span>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Formulario de Confirmación -->
+        <div class="card shadow border-danger">
+            <div class="card-header bg-danger text-white">
+                <h5 class="mb-0"><i class="bi bi-exclamation-triangle"></i> Confirmar Cancelación</h5>
+            </div>
+            <div class="card-body">
+                <form method="post">
+                    {% csrf_token %}
+                    
+                    <div class="mb-4">
+                        <div class="form-check">
+                            {{ form.confirmar }}
+                            <label class="form-check-label" for="{{ form.confirmar.id_for_label }}">
+                                <strong>{{ form.confirmar.label }}</strong>
+                            </label>
+                        </div>
+                        <small class="form-text text-danger">
+                            {{ form.confirmar.help_text }}
+                        </small>
+                        {% if form.confirmar.errors %}
+                            <div class="text-danger">{{ form.confirmar.errors }}</div>
+                        {% endif %}
+                    </div>
+
+                    <div class="alert alert-info">
+                        <strong>Al confirmar la cancelación:</strong>
+                        <ol class="mb-0">
+                            <li>Se calculará el interés generado: <strong>{{ cuenta.get_moneda_display }} {{ interes_generado|floatformat:2 }}</strong></li>
+                            <li>Se acreditará el monto total: <strong>{{ cuenta.get_moneda_display }} {{ monto_total|floatformat:2 }}</strong></li>
+                            <li>La cuenta será cerrada automáticamente</li>
+                            <li>Se generarán los movimientos correspondientes</li>
+                        </ol>
+                    </div>
+
+                    <hr class="my-4">
+                    
+                    <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                        <a href="{% url 'cuentas:detalle_cuenta' cuenta.id %}" class="btn btn-secondary btn-lg">
+                            <i class="bi bi-x-circle"></i> Cancelar Operación
+                        </a>
+                        <button type="submit" class="btn btn-danger btn-lg">
+                            <i class="bi bi-check-circle"></i> Confirmar Cancelación de Plazo Fijo
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
