@@ -47,10 +47,23 @@
                         <label for="{{ form.numero_documento.id_for_label }}" class="form-label required-field">
                             Número de Documento
                         </label>
-                        {{ form.numero_documento }}
+                        <div class="input-group">
+                            {{ form.numero_documento }}
+                            <button type="button" class="btn btn-primary" id="btnConsultar" onclick="consultarDocumento()">
+                                <i class="bi bi-search"></i> Consultar
+                            </button>
+                        </div>
                         <small class="form-text text-muted">
                             El sistema consultará automáticamente RENIEC o SUNAT
                         </small>
+                        <div id="consultaLoading" class="mt-2" style="display: none;">
+                            <div class="spinner-border spinner-border-sm text-primary" role="status">
+                                <span class="visually-hidden">Consultando...</span>
+                            </div>
+                            <span class="ms-2 text-primary">Consultando...</span>
+                        </div>
+                        <div id="consultaError" class="alert alert-danger mt-2" style="display: none;"></div>
+                        <div id="consultaSuccess" class="alert alert-success mt-2" style="display: none;"></div>
                         {% if form.numero_documento.errors %}
                             <div class="text-danger">{{ form.numero_documento.errors }}</div>
                         {% endif %}
@@ -193,7 +206,7 @@ function toggleTipoCliente() {
     const tipoDocumento = document.getElementById('{{ form.tipo_documento.id_for_label }}');
     const datosNatural = document.getElementById('datosNatural');
     const datosJuridica = document.getElementById('datosJuridica');
-    
+
     if (tipoCliente === 'NATURAL') {
         datosNatural.style.display = 'block';
         datosJuridica.style.display = 'none';
@@ -208,7 +221,7 @@ function toggleTipoCliente() {
 function toggleTipoDocumento() {
     const tipoDocumento = document.getElementById('{{ form.tipo_documento.id_for_label }}').value;
     const tipoCliente = document.getElementById('{{ form.tipo_cliente.id_for_label }}');
-    
+
     if (tipoDocumento === 'DNI') {
         tipoCliente.value = 'NATURAL';
     } else if (tipoDocumento === 'RUC') {
@@ -217,12 +230,111 @@ function toggleTipoDocumento() {
     toggleTipoCliente();
 }
 
+function consultarDocumento() {
+    const numeroDocumento = document.getElementById('{{ form.numero_documento.id_for_label }}').value.trim();
+    const tipoDocumento = document.getElementById('{{ form.tipo_documento.id_for_label }}').value;
+
+    // Limpiar mensajes previos
+    document.getElementById('consultaError').style.display = 'none';
+    document.getElementById('consultaSuccess').style.display = 'none';
+
+    // Validar que se haya ingresado un documento
+    if (!numeroDocumento) {
+        mostrarError('Por favor ingrese un número de documento');
+        return;
+    }
+
+    // Validar longitud según tipo
+    if (tipoDocumento === 'DNI' && numeroDocumento.length !== 8) {
+        mostrarError('El DNI debe tener 8 dígitos');
+        return;
+    }
+
+    if (tipoDocumento === 'RUC' && numeroDocumento.length !== 11) {
+        mostrarError('El RUC debe tener 11 dígitos');
+        return;
+    }
+
+    // Mostrar loading
+    document.getElementById('consultaLoading').style.display = 'block';
+    document.getElementById('btnConsultar').disabled = true;
+
+    // Realizar consulta AJAX
+    fetch(`/clientes/consultar-api/?documento=${numeroDocumento}&tipo=${tipoDocumento}`, {
+        method: 'GET',
+        headers: {
+            'X-Requested-With': 'XMLHttpRequest',
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        document.getElementById('consultaLoading').style.display = 'none';
+        document.getElementById('btnConsultar').disabled = false;
+
+        if (data.success) {
+            // Autocompletar formulario
+            if (tipoDocumento === 'DNI') {
+                document.getElementById('{{ form.nombres.id_for_label }}').value = data.datos.nombres || '';
+                document.getElementById('{{ form.apellido_paterno.id_for_label }}').value = data.datos.apellido_paterno || '';
+                document.getElementById('{{ form.apellido_materno.id_for_label }}').value = data.datos.apellido_materno || '';
+
+                if (data.datos.direccion) {
+                    document.getElementById('{{ form.direccion.id_for_label }}').value = data.datos.direccion;
+                }
+            } else if (tipoDocumento === 'RUC') {
+                document.getElementById('{{ form.razon_social.id_for_label }}').value = data.datos.razon_social || '';
+                document.getElementById('{{ form.nombre_comercial.id_for_label }}').value = data.datos.nombre_comercial || '';
+
+                if (data.datos.direccion) {
+                    document.getElementById('{{ form.direccion.id_for_label }}').value = data.datos.direccion;
+                }
+            }
+
+            mostrarExito('Datos consultados exitosamente');
+        } else {
+            mostrarError(data.error || 'Error al consultar los datos');
+        }
+    })
+    .catch(error => {
+        document.getElementById('consultaLoading').style.display = 'none';
+        document.getElementById('btnConsultar').disabled = false;
+        console.error('Error:', error);
+        mostrarError('Error de conexión. Los datos se ingresarán manualmente.');
+    });
+}
+
+function mostrarError(mensaje) {
+    const errorDiv = document.getElementById('consultaError');
+    errorDiv.textContent = mensaje;
+    errorDiv.style.display = 'block';
+    setTimeout(() => {
+        errorDiv.style.display = 'none';
+    }, 5000);
+}
+
+function mostrarExito(mensaje) {
+    const successDiv = document.getElementById('consultaSuccess');
+    successDiv.textContent = mensaje;
+    successDiv.style.display = 'block';
+    setTimeout(() => {
+        successDiv.style.display = 'none';
+    }, 3000);
+}
+
 // Inicializar al cargar
 document.addEventListener('DOMContentLoaded', function() {
     toggleTipoCliente();
-    
+
     document.getElementById('{{ form.tipo_cliente.id_for_label }}').addEventListener('change', toggleTipoCliente);
     document.getElementById('{{ form.tipo_documento.id_for_label }}').addEventListener('change', toggleTipoDocumento);
+
+    // Permitir consultar con Enter
+    document.getElementById('{{ form.numero_documento.id_for_label }}').addEventListener('keypress', function(e) {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            consultarDocumento();
+        }
+    });
 });
 </script>
 {% endblock %}

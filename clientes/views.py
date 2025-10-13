@@ -1,6 +1,3 @@
-from django.shortcuts import render
-
-# Create your views here.
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
@@ -26,12 +23,12 @@ def lista_clientes(request):
 
     if busqueda:
       clientes = clientes.filter(
-          Q(codigo__icontains=busqueda) |
-          Q(numero_documento__icontains=busqueda) |
-          Q(nombres__icontains=busqueda) |
-          Q(apellido_paterno__icontains=busqueda) |
-          Q(apellido_materno__icontains=busqueda) |
-          Q(razon_social__icontains=busqueda)
+        Q(codigo__icontains=busqueda) |
+        Q(numero_documento__icontains=busqueda) |
+        Q(nombres__icontains=busqueda) |
+        Q(apellido_paterno__icontains=busqueda) |
+        Q(apellido_materno__icontains=busqueda) |
+        Q(razon_social__icontains=busqueda)
       )
 
     if tipo_cliente:
@@ -71,27 +68,26 @@ def crear_cliente(request):
               cliente.apellido_materno = datos_reniec['apellido_materno']
 
               if not cliente.direccion:
-                cliente.direccion = datos_reniec.get('direccion',
-                                                     'No especificado')
+                cliente.direccion = datos_reniec.get('direccion', 'No especificado')
 
               cliente.save()
 
               # Guardar datos de RENIEC
               DatosReniec.objects.create(
-                  cliente=cliente,
-                  dni=datos_reniec['dni'],
-                  nombres=datos_reniec['nombres'],
-                  apellido_paterno=datos_reniec['apellido_paterno'],
-                  apellido_materno=datos_reniec['apellido_materno'],
-                  fecha_nacimiento=datos_reniec.get('fecha_nacimiento'),
-                  ubigeo=datos_reniec.get('ubigeo'),
-                  direccion=datos_reniec.get('direccion')
+                cliente=cliente,
+                dni=datos_reniec['dni'],
+                nombres=datos_reniec['nombres'],
+                apellido_paterno=datos_reniec['apellido_paterno'],
+                apellido_materno=datos_reniec['apellido_materno'],
+                fecha_nacimiento=datos_reniec.get('fecha_nacimiento'),
+                ubigeo=datos_reniec.get('ubigeo'),
+                direccion=datos_reniec.get('direccion')
               )
 
             except ValidationError as e:
               messages.warning(
-                  request,
-                  f'No se pudo consultar RENIEC: {str(e)}. Cliente registrado con datos manuales.'
+                request,
+                f'No se pudo consultar RENIEC: {str(e)}. Cliente registrado con datos manuales.'
               )
               cliente.save()
 
@@ -105,36 +101,35 @@ def crear_cliente(request):
               cliente.nombre_comercial = datos_sunat.get('nombre_comercial')
 
               if not cliente.direccion:
-                cliente.direccion = datos_sunat.get('direccion',
-                                                    'No especificado')
+                cliente.direccion = datos_sunat.get('direccion', 'No especificado')
 
               cliente.save()
 
               # Guardar datos de SUNAT
               DatosSunat.objects.create(
-                  cliente=cliente,
-                  ruc=datos_sunat['ruc'],
-                  razon_social=datos_sunat['razon_social'],
-                  nombre_comercial=datos_sunat.get('nombre_comercial'),
-                  tipo_contribuyente=datos_sunat.get('tipo_contribuyente'),
-                  estado=datos_sunat.get('estado'),
-                  condicion=datos_sunat.get('condicion'),
-                  direccion=datos_sunat.get('direccion'),
-                  departamento=datos_sunat.get('departamento'),
-                  provincia=datos_sunat.get('provincia'),
-                  distrito=datos_sunat.get('distrito')
+                cliente=cliente,
+                ruc=datos_sunat['ruc'],
+                razon_social=datos_sunat['razon_social'],
+                nombre_comercial=datos_sunat.get('nombre_comercial'),
+                tipo_contribuyente=datos_sunat.get('tipo_contribuyente'),
+                estado=datos_sunat.get('estado'),
+                condicion=datos_sunat.get('condicion'),
+                direccion=datos_sunat.get('direccion'),
+                departamento=datos_sunat.get('departamento'),
+                provincia=datos_sunat.get('provincia'),
+                distrito=datos_sunat.get('distrito')
               )
 
             except ValidationError as e:
               messages.warning(
-                  request,
-                  f'No se pudo consultar SUNAT: {str(e)}. Cliente registrado con datos manuales.'
+                request,
+                f'No se pudo consultar SUNAT: {str(e)}. Cliente registrado con datos manuales.'
               )
               cliente.save()
 
           messages.success(
-              request,
-              f'Cliente {cliente.get_nombre_completo()} registrado exitosamente con código {cliente.codigo}'
+            request,
+            f'Cliente {cliente.get_nombre_completo()} registrado exitosamente con código {cliente.codigo}'
           )
           return redirect('clientes:detalle_cliente', cliente_id=cliente.id)
 
@@ -193,8 +188,7 @@ def editar_cliente(request, cliente_id):
     if form.is_valid():
       try:
         cliente = form.save()
-        messages.success(request,
-                         f'Cliente {cliente.get_nombre_completo()} actualizado exitosamente.')
+        messages.success(request, f'Cliente {cliente.get_nombre_completo()} actualizado exitosamente.')
         return redirect('clientes:detalle_cliente', cliente_id=cliente.id)
       except ValidationError as e:
         messages.error(request, f'Error al actualizar cliente: {str(e)}')
@@ -215,31 +209,38 @@ def editar_cliente(request, cliente_id):
 
 
 @login_required
-def buscar_cliente_ajax(request):
-  """Vista AJAX para buscar clientes"""
+def consultar_api_documento(request):
+  """Vista AJAX para consultar API de RENIEC o SUNAT"""
   from django.http import JsonResponse
 
-  busqueda = request.GET.get('q', '')
+  if not request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+    return JsonResponse({'success': False, 'error': 'Solicitud no válida'})
 
-  if len(busqueda) < 3:
-    return JsonResponse({'clientes': []})
+  documento = request.GET.get('documento', '').strip()
+  tipo = request.GET.get('tipo', '').strip()
 
-  clientes = Cliente.objects.filter(
-      Q(codigo__icontains=busqueda) |
-      Q(numero_documento__icontains=busqueda) |
-      Q(nombres__icontains=busqueda) |
-      Q(apellido_paterno__icontains=busqueda) |
-      Q(apellido_materno__icontains=busqueda) |
-      Q(razon_social__icontains=busqueda)
-  ).filter(esta_activo=True)[:10]
+  if not documento or not tipo:
+    return JsonResponse({'success': False, 'error': 'Faltan parámetros'})
 
-  resultados = []
-  for cliente in clientes:
-    resultados.append({
-      'id': cliente.id,
-      'codigo': cliente.codigo,
-      'nombre': cliente.get_nombre_completo(),
-      'documento': f"{cliente.get_tipo_documento_display()}: {cliente.numero_documento}",
-    })
+  try:
+    if tipo == 'DNI':
+      # Consultar RENIEC
+      datos = obtener_datos_reniec(documento, usar_mock=False)
+      return JsonResponse({
+        'success': True,
+        'datos': datos
+      })
+    elif tipo == 'RUC':
+      # Consultar SUNAT
+      datos = obtener_datos_sunat(documento, usar_mock=False)
+      return JsonResponse({
+        'success': True,
+        'datos': datos
+      })
+    else:
+      return JsonResponse({'success': False, 'error': 'Tipo de documento no válido'})
 
-  return JsonResponse({'clientes': resultados})
+  except ValidationError as e:
+    return JsonResponse({'success': False, 'error': str(e)})
+  except Exception as e:
+    return JsonResponse({'success': False, 'error': f'Error al consultar: {str(e)}'})

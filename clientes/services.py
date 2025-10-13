@@ -3,13 +3,16 @@ from typing import Dict, Optional
 from django.core.exceptions import ValidationError
 
 
+base_url_dni = "https://api.decolecta.com/v1/reniec/dni?numero="
+base_url_ruc = "https://api.decolecta.com/v1/sunat/ruc?numero="
+
 class ReniecService:
   """Servicio para consultar datos de RENIEC"""
 
   def __init__(self):
     # En producción, estas URLs y tokens deben venir de variables de entorno
-    self.base_url = "https://dniruc.apisperu.com/api/v1/dni"
-    self.token = "TU_TOKEN_AQUI"  # Debe configurarse en .env
+    self.base_url_dni = "https://api.decolecta.com/v1/reniec/dni?numero="
+    self.token = "sk_10866.U32BixjyN14F9QgTvXMn6HUJf7SfAK6m"  # Debe configurarse en .env
 
   def consultar_dni(self, dni: str) -> Optional[Dict]:
     """
@@ -30,7 +33,7 @@ class ReniecService:
         raise ValidationError("El DNI debe tener 8 dígitos numéricos")
 
       # Realizar consulta a la API
-      url = f"{self.base_url}/{dni}"
+      url = f"{self.base_url_dni}" + dni
       headers = {
         'Authorization': f'Bearer {self.token}',
         'Content-Type': 'application/json'
@@ -55,14 +58,14 @@ class ReniecService:
 
   def _procesar_respuesta_reniec(self, data: Dict) -> Dict:
     """Procesa la respuesta de RENIEC y retorna datos estructurados"""
+    print(data)
     return {
-      'dni': data.get('dni', ''),
-      'nombres': data.get('nombres', ''),
-      'apellido_paterno': data.get('apellidoPaterno', ''),
-      'apellido_materno': data.get('apellidoMaterno', ''),
+      'dni': data.get('document_number', ''),
+      'nombres': data.get('first_name', ''),
+      'nombre_completo': data.get('full_name', ''),
+      'apellido_paterno': data.get('first_last_name', ''),
+      'apellido_materno': data.get('second_last_name', ''),
       'fecha_nacimiento': data.get('fechaNacimiento', ''),
-      'ubigeo': data.get('ubigeo', ''),
-      'direccion': data.get('direccion', ''),
     }
 
   def consultar_dni_mock(self, dni: str) -> Dict:
@@ -90,8 +93,8 @@ class SunatService:
 
   def __init__(self):
     # En producción, estas URLs y tokens deben venir de variables de entorno
-    self.base_url = "https://dniruc.apisperu.com/api/v1/ruc"
-    self.token = "TU_TOKEN_AQUI"  # Debe configurarse en .env
+    self.base_url_ruc = "https://api.decolecta.com/v1/sunat/ruc?numero="
+    self.token = "sk_10866.U32BixjyN14F9QgTvXMn6HUJf7SfAK6m"  # Debe configurarse en .env
 
   def consultar_ruc(self, ruc: str) -> Optional[Dict]:
     """
@@ -112,7 +115,7 @@ class SunatService:
         raise ValidationError("El RUC debe tener 11 dígitos numéricos")
 
       # Realizar consulta a la API
-      url = f"{self.base_url}/{ruc}"
+      url = f"{self.base_url_ruc}" + ruc
       headers = {
         'Authorization': f'Bearer {self.token}',
         'Content-Type': 'application/json'
@@ -138,8 +141,8 @@ class SunatService:
   def _procesar_respuesta_sunat(self, data: Dict) -> Dict:
     """Procesa la respuesta de SUNAT y retorna datos estructurados"""
     return {
-      'ruc': data.get('ruc', ''),
-      'razon_social': data.get('razonSocial', ''),
+      'ruc': data.get('numero_documento', ''),
+      'razon_social': data.get('razon_social', ''),
       'nombre_comercial': data.get('nombreComercial', ''),
       'tipo_contribuyente': data.get('tipoContribuyente', ''),
       'estado': data.get('estado', ''),
@@ -186,8 +189,8 @@ def obtener_datos_reniec(dni: str, usar_mock: bool = False) -> Dict:
       Diccionario con los datos de la persona
   """
   service = ReniecService()
-  if usar_mock:
-    return service.consultar_dni_mock(dni)
+  # if usar_mock:
+  #   return service.consultar_dni_mock(dni)
   return service.consultar_dni(dni)
 
 
@@ -203,6 +206,6 @@ def obtener_datos_sunat(ruc: str, usar_mock: bool = False) -> Dict:
       Diccionario con los datos de la empresa
   """
   service = SunatService()
-  if usar_mock:
-    return service.consultar_ruc_mock(ruc)
+  # if usar_mock:
+  #   return service.consultar_ruc_mock(ruc)
   return service.consultar_ruc(ruc)
