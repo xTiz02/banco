@@ -1,0 +1,78 @@
+{% extends 'portal_cliente/base_portal.html' %}
+
+{% block title %}Iniciar Sesión - Portal del Cliente{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row justify-content-center align-items-center" style="min-height: 80vh;">
+        <div class="col-md-5">
+            <div class="card shadow-lg border-0" style="border-radius: 20px;">
+                <div class="card-body p-5">
+                    <!-- Logo/Título -->
+                    <div class="text-center mb-4">
+                        <div class="bg-primary bg-gradient rounded-circle d-inline-flex p-3 mb-3">
+                            <i class="bi bi-bank2 text-white" style="font-size: 3rem;"></i>
+                        </div>
+                        <h3 class="fw-bold">Portal del Cliente</h3>
+                        <p class="text-muted">Accede a tu banca en línea</p>
+                    </div>
+
+                    <!-- Formulario de Login -->
+                    <form method="post">
+                        {% csrf_token %}
+                        
+                        <div class="mb-3">
+                            <label for="{{ form.dni.id_for_label }}" class="form-label">
+                                <i class="bi bi-person-badge"></i> DNI
+                            </label>
+                            {{ form.dni }}
+                            {% if form.dni.errors %}
+                                <div class="text-danger small mt-1">{{ form.dni.errors }}</div>
+                            {% endif %}
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="{{ form.password.id_for_label }}" class="form-label">
+                                <i class="bi bi-lock"></i> Contraseña
+                            </label>
+                            {{ form.password }}
+                            {% if form.password.errors %}
+                                <div class="text-danger small mt-1">{{ form.password.errors }}</div>
+                            {% endif %}
+                        </div>
+
+                        <div class="d-grid gap-2 mb-3">
+                            <button type="submit" class="btn btn-primary btn-lg">
+                                <i class="bi bi-box-arrow-in-right"></i> Iniciar Sesión
+                            </button>
+                        </div>
+
+                        <div class="text-center">
+                            <a href="{% url 'portal:recuperar_password' %}" class="text-decoration-none small">
+                                <i class="bi bi-key"></i> ¿Olvidaste tu contraseña?
+                            </a>
+                        </div>
+                    </form>
+
+                    <hr class="my-4">
+
+                    <!-- Registro -->
+                    <div class="text-center">
+                        <p class="mb-2">¿No tienes una cuenta?</p>
+                        <a href="{% url 'portal:registro' %}" class="btn btn-outline-primary w-100">
+                            <i class="bi bi-person-plus"></i> Regístrate Aquí
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Información adicional -->
+            <div class="text-center mt-3 text-white">
+                <small>
+                    <i class="bi bi-shield-check"></i> Conexión segura y cifrada
+                </small>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

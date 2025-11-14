@@ -1,0 +1,158 @@
+{% extends 'portal_cliente/base_portal.html' %}
+
+{% block title %}Registro - Portal del Cliente{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-md-7">
+            <div class="card shadow-lg border-0" style="border-radius: 20px;">
+                <div class="card-body p-5">
+                    <!-- Encabezado -->
+                    <div class="text-center mb-4">
+                        <div class="bg-success bg-gradient rounded-circle d-inline-flex p-3 mb-3">
+                            <i class="bi bi-person-plus text-white" style="font-size: 2.5rem;"></i>
+                        </div>
+                        <h3 class="fw-bold">Crear Cuenta</h3>
+                        <p class="text-muted">Regístrate para acceder a tu banca en línea</p>
+                    </div>
+
+                    <!-- Alerta informativa -->
+                    <div class="alert alert-info">
+                        <i class="bi bi-info-circle"></i>
+                        <strong>Requisitos:</strong>
+                        <ul class="mb-0 mt-2">
+                            <li>Debes tener al menos una cuenta activa en el banco</li>
+                            <li>Tu usuario será tu número de DNI</li>
+                            <li>La contraseña debe cumplir con los requisitos de seguridad</li>
+                        </ul>
+                    </div>
+
+                    <!-- Formulario -->
+                    <form method="post" id="registroForm">
+                        {% csrf_token %}
+                        
+                        <!-- DNI -->
+                        <div class="mb-3">
+                            <label for="{{ form.dni.id_for_label }}" class="form-label fw-bold">
+                                <i class="bi bi-person-badge"></i> DNI
+                            </label>
+                            {{ form.dni }}
+                            <small class="form-text text-muted d-block">
+                                {{ form.dni.help_text }}
+                            </small>
+                            {% if form.dni.errors %}
+                                <div class="text-danger small mt-1">{{ form.dni.errors }}</div>
+                            {% endif %}
+                        </div>
+
+                        <!-- Contraseña -->
+                        <div class="mb-3">
+                            <label for="{{ form.password.id_for_label }}" class="form-label fw-bold">
+                                <i class="bi bi-lock"></i> Contraseña
+                            </label>
+                            {{ form.password }}
+                            <small class="form-text text-muted d-block">
+                                {{ form.password.help_text }}
+                            </small>
+                            {% if form.password.errors %}
+                                <div class="text-danger small mt-1">{{ form.password.errors }}</div>
+                            {% endif %}
+                            
+                            <!-- Indicador de fortaleza -->
+                            <div class="progress mt-2" style="height: 5px;">
+                                <div id="passwordStrength" class="progress-bar" role="progressbar" style="width: 0%"></div>
+                            </div>
+                            <small id="strengthText" class="text-muted"></small>
+                        </div>
+
+                        <!-- Confirmar Contraseña -->
+                        <div class="mb-3">
+                            <label for="{{ form.confirmar_password.id_for_label }}" class="form-label fw-bold">
+                                <i class="bi bi-lock-fill"></i> Confirmar Contraseña
+                            </label>
+                            {{ form.confirmar_password }}
+                            {% if form.confirmar_password.errors %}
+                                <div class="text-danger small mt-1">{{ form.confirmar_password.errors }}</div>
+                            {% endif %}
+                        </div>
+
+                        <!-- Palabra de Recuperación -->
+                        <div class="mb-3">
+                            <label for="{{ form.palabra_recuperacion.id_for_label }}" class="form-label fw-bold">
+                                <i class="bi bi-key"></i> Palabra de Recuperación
+                            </label>
+                            {{ form.palabra_recuperacion }}
+                            <small class="form-text text-muted d-block">
+                                {{ form.palabra_recuperacion.help_text }}
+                            </small>
+                            {% if form.palabra_recuperacion.errors %}
+                                <div class="text-danger small mt-1">{{ form.palabra_recuperacion.errors }}</div>
+                            {% endif %}
+                        </div>
+
+                        <!-- Términos y Condiciones -->
+                        <div class="mb-4">
+                            <div class="form-check">
+                                {{ form.acepto_terminos }}
+                                <label class="form-check-label" for="{{ form.acepto_terminos.id_for_label }}">
+                                    {{ form.acepto_terminos.label }}
+                                </label>
+                            </div>
+                            {% if form.acepto_terminos.errors %}
+                                <div class="text-danger small mt-1">{{ form.acepto_terminos.errors }}</div>
+                            {% endif %}
+                        </div>
+
+                        <!-- Botones -->
+                        <div class="d-grid gap-2">
+                            <button type="submit" class="btn btn-success btn-lg">
+                                <i class="bi bi-check-circle"></i> Crear Mi Cuenta
+                            </button>
+                            <a href="{% url 'portal:login' %}" class="btn btn-outline-secondary">
+                                <i class="bi bi-arrow-left"></i> Volver al Login
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Medidor de fortaleza de contraseña
+document.getElementById('{{ form.password.id_for_label }}').addEventListener('input', function() {
+    const password = this.value;
+    const strengthBar = document.getElementById('passwordStrength');
+    const strengthText = document.getElementById('strengthText');
+    
+    let strength = 0;
+    
+    if (password.length >= 8) strength += 20;
+    if (password.length >= 12) strength += 10;
+    if (/[a-z]/.test(password)) strength += 20;
+    if (/[A-Z]/.test(password)) strength += 20;
+    if (/\d/.test(password)) strength += 15;
+    if (/[!@#$%^&*(),.?":{}|<>]/.test(password)) strength += 15;
+    
+    strengthBar.style.width = strength + '%';
+    
+    if (strength < 40) {
+        strengthBar.className = 'progress-bar bg-danger';
+        strengthText.textContent = 'Débil';
+        strengthText.className = 'text-danger';
+    } else if (strength < 70) {
+        strengthBar.className = 'progress-bar bg-warning';
+        strengthText.textContent = 'Media';
+        strengthText.className = 'text-warning';
+    } else {
+        strengthBar.className = 'progress-bar bg-success';
+        strengthText.textContent = 'Fuerte';
+        strengthText.className = 'text-success';
+    }
+});
+</script>
+{% endblock %}

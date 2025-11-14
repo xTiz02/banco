@@ -1,0 +1,239 @@
+{% extends 'portal_cliente/base_portal.html' %}
+
+{% block title %}Mi Dashboard - Portal del Cliente{% endblock %}
+
+{% block content %}
+<!-- Encabezado de Bienvenida -->
+<div class="mb-4">
+    <h2 class="fw-bold">¡Bienvenido, {{ cliente.nombres }}!</h2>
+    <p class="text-muted">Aquí puedes ver el resumen de tus cuentas y operaciones</p>
+</div>
+
+<!-- Resumen de Saldos -->
+<div class="row mb-4">
+    <div class="col-md-4">
+        <div class="card card-custom bg-primary text-white">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h6 class="text-uppercase mb-1 opacity-75">Total en Soles</h6>
+                        <h2 class="mb-0 fw-bold">S/ {{ total_soles|floatformat:2 }}</h2>
+                    </div>
+                    <i class="bi bi-cash-stack" style="font-size: 3rem; opacity: 0.3;"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-4">
+        <div class="card card-custom bg-success text-white">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h6 class="text-uppercase mb-1 opacity-75">Total en Dólares</h6>
+                        <h2 class="mb-0 fw-bold">$ {{ total_dolares|floatformat:2 }}</h2>
+                    </div>
+                    <i class="bi bi-currency-dollar" style="font-size: 3rem; opacity: 0.3;"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-4">
+        <div class="card card-custom bg-info text-white">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h6 class="text-uppercase mb-1 opacity-75">Mis Cuentas</h6>
+                        <h2 class="mb-0 fw-bold">{{ total_cuentas }}</h2>
+                    </div>
+                    <i class="bi bi-credit-card-2-front" style="font-size: 3rem; opacity: 0.3;"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Mis Cuentas -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card card-custom">
+            <div class="card-header bg-white border-bottom py-3">
+                <div class="d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0 fw-bold">
+                        <i class="bi bi-wallet2"></i> Mis Cuentas
+                    </h5>
+                    <a href="#" class="btn btn-sm btn-primary">
+                        <i class="bi bi-plus-circle"></i> Nueva Cuenta
+                    </a>
+                </div>
+            </div>
+            <div class="card-body">
+                {% if cuentas %}
+                <div class="row">
+                    {% for cuenta in cuentas %}
+                    <div class="col-md-6 mb-3">
+                        <div class="cuenta-card">
+                            <div class="d-flex justify-content-between align-items-start mb-3">
+                                <div>
+                                    <span class="badge badge-custom bg-white text-primary">
+                                        {{ cuenta.get_tipo_cuenta_display }}
+                                    </span>
+                                </div>
+                                <span class="badge badge-custom 
+                                    {% if cuenta.estado == 'ACTIVA' %}bg-success
+                                    {% else %}bg-warning{% endif %}">
+                                    {{ cuenta.get_estado_display }}
+                                </span>
+                            </div>
+                            
+                            <div class="mb-2">
+                                <small class="opacity-75">Número de Cuenta</small>
+                                <h5 class="mb-0">{{ cuenta.numero_cuenta }}</h5>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <small class="opacity-75">Saldo Disponible</small>
+                                <div class="saldo-display">
+                                    {{ cuenta.get_moneda_display }} {{ cuenta.get_saldo_disponible|floatformat:2 }}
+                                </div>
+                            </div>
+                            
+                            <div class="d-flex gap-2">
+                                <a href="#" class="btn btn-light btn-sm flex-fill">
+                                    <i class="bi bi-eye"></i> Ver Detalle
+                                </a>
+                                <a href="#" class="btn btn-light btn-sm flex-fill">
+                                    <i class="bi bi-arrow-left-right"></i> Transferir
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <div class="text-center py-5">
+                    <i class="bi bi-inbox" style="font-size: 4rem; color: #ddd;"></i>
+                    <p class="text-muted mt-3">No tienes cuentas activas</p>
+                    <a href="#" class="btn btn-primary">
+                        <i class="bi bi-plus-circle"></i> Aperturar Mi Primera Cuenta
+                    </a>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Últimos Movimientos -->
+<div class="row">
+    <div class="col-12">
+        <div class="card card-custom">
+            <div class="card-header bg-white border-bottom py-3">
+                <h5 class="mb-0 fw-bold">
+                    <i class="bi bi-clock-history"></i> Últimos Movimientos
+                </h5>
+            </div>
+            <div class="card-body">
+                {% if ultimos_movimientos %}
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Fecha</th>
+                                <th>Cuenta</th>
+                                <th>Tipo</th>
+                                <th>Descripción</th>
+                                <th class="text-end">Monto</th>
+                                <th class="text-end">Saldo</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for mov in ultimos_movimientos %}
+                            <tr>
+                                <td>
+                                    <small>{{ mov.fecha_hora|date:"d/m/Y H:i" }}</small>
+                                </td>
+                                <td>
+                                    <small><code>{{ mov.cuenta.numero_cuenta }}</code></small>
+                                </td>
+                                <td>
+                                    <span class="badge 
+                                        {% if mov.tipo_movimiento == 'DEPOSITO' %}bg-success
+                                        {% elif mov.tipo_movimiento == 'RETIRO' %}bg-warning
+                                        {% elif 'TRANSFERENCIA' in mov.tipo_movimiento %}bg-info
+                                        {% else %}bg-secondary{% endif %}">
+                                        {{ mov.get_tipo_movimiento_display }}
+                                    </span>
+                                </td>
+                                <td>
+                                    <small>{{ mov.descripcion|truncatewords:8 }}</small>
+                                </td>
+                                <td class="text-end">
+                                    {% if mov.tipo_movimiento == 'RETIRO' or 'ENVIADA' in mov.tipo_movimiento %}
+                                        <span class="text-danger fw-bold">-{{ mov.monto|floatformat:2 }}</span>
+                                    {% else %}
+                                        <span class="text-success fw-bold">+{{ mov.monto|floatformat:2 }}</span>
+                                    {% endif %}
+                                </td>
+                                <td class="text-end">
+                                    <strong>{{ mov.saldo_nuevo|floatformat:2 }}</strong>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                <div class="text-center mt-3">
+                    <a href="#" class="btn btn-outline-primary">
+                        Ver Todos los Movimientos
+                    </a>
+                </div>
+                {% else %}
+                <div class="text-center py-4">
+                    <i class="bi bi-inbox" style="font-size: 3rem; color: #ddd;"></i>
+                    <p class="text-muted mt-3">No hay movimientos recientes</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Accesos Rápidos -->
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="card card-custom">
+            <div class="card-body">
+                <h6 class="fw-bold mb-3">Accesos Rápidos</h6>
+                <div class="row g-3">
+                    <div class="col-md-3">
+                        <a href="#" class="btn btn-outline-primary w-100">
+                            <i class="bi bi-arrow-down-circle"></i><br>
+                            <small>Depositar</small>
+                        </a>
+                    </div>
+                    <div class="col-md-3">
+                        <a href="#" class="btn btn-outline-warning w-100">
+                            <i class="bi bi-arrow-up-circle"></i><br>
+                            <small>Retirar</small>
+                        </a>
+                    </div>
+                    <div class="col-md-3">
+                        <a href="#" class="btn btn-outline-info w-100">
+                            <i class="bi bi-arrow-left-right"></i><br>
+                            <small>Transferir</small>
+                        </a>
+                    </div>
+                    <div class="col-md-3">
+                        <a href="#" class="btn btn-outline-success w-100">
+                            <i class="bi bi-plus-circle"></i><br>
+                            <small>Nueva Cuenta</small>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

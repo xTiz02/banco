@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Portal del Cliente - Banco{% endblock %}</title>
+
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+
+    <!-- Bootstrap Icons -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+
+    {% block extra_css %}{% endblock %}
+
+    <style>
+        :root {
+            --primary-color: #2563eb;
+            --secondary-color: #64748b;
+            --success-color: #10b981;
+            --danger-color: #ef4444;
+        }
+
+        body {
+            min-height: 100vh;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+
+        .portal-container {
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .navbar-portal {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        .sidebar-portal {
+            background: white;
+            min-height: calc(100vh - 56px);
+            box-shadow: 2px 0 10px rgba(0,0,0,0.1);
+        }
+
+        .sidebar-portal .nav-link {
+            color: #475569;
+            padding: 12px 20px;
+            border-left: 3px solid transparent;
+            transition: all 0.3s;
+        }
+
+        .sidebar-portal .nav-link:hover {
+            background-color: #f1f5f9;
+            border-left-color: var(--primary-color);
+        }
+
+        .sidebar-portal .nav-link.active {
+            background-color: #eff6ff;
+            border-left-color: var(--primary-color);
+            color: var(--primary-color);
+            font-weight: 600;
+        }
+
+        .main-content {
+            background: white;
+            min-height: calc(100vh - 56px);
+            padding: 30px;
+        }
+
+        .card-custom {
+            border: none;
+            border-radius: 15px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            transition: transform 0.3s, box-shadow 0.3s;
+        }
+
+        .card-custom:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 15px rgba(0,0,0,0.2);
+        }
+
+        .btn-portal {
+            padding: 10px 25px;
+            border-radius: 8px;
+            font-weight: 500;
+            transition: all 0.3s;
+        }
+
+        .cuenta-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-radius: 15px;
+            padding: 25px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+        }
+
+        .saldo-display {
+            font-size: 2rem;
+            font-weight: 700;
+            margin: 10px 0;
+        }
+
+        .badge-custom {
+            padding: 8px 15px;
+            border-radius: 20px;
+            font-weight: 500;
+        }
+
+        @media (max-width: 768px) {
+            .sidebar-portal {
+                min-height: auto;
+            }
+
+            .main-content {
+                padding: 15px;
+            }
+        }
+    </style>
+</head>
+<body>
+    {% if request.session.cliente_id %}
+    <!-- Navbar para usuarios autenticados -->
+    <nav class="navbar navbar-expand-lg navbar-portal">
+        <div class="container-fluid">
+            <a class="navbar-brand fw-bold text-primary" href="{% url 'portal:dashboard' %}">
+                <i class="bi bi-bank2"></i> Mi Banco
+            </a>
+
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarPortal">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+
+            <div class="collapse navbar-collapse" id="navbarPortal">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" id="userDropdown" role="button" data-bs-toggle="dropdown">
+                            <i class="bi bi-person-circle fs-5"></i>
+                            <span class="ms-2">{{ cliente.get_nombre_completo }}</span>
+                        </a>
+                        <ul class="dropdown-menu dropdown-menu-end">
+                            <li><a class="dropdown-item" href="{% url 'portal:dashboard' %}">
+                                <i class="bi bi-speedometer2"></i> Dashboard
+                            </a></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li><a class="dropdown-item text-danger" href="{% url 'portal:logout' %}">
+                                <i class="bi bi-box-arrow-right"></i> Cerrar Sesión
+                            </a></li>
+                        </ul>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container-fluid portal-container">
+        <div class="row flex-grow-1">
+            <!-- Sidebar -->
+            <nav class="col-md-2 d-md-block sidebar-portal">
+                <div class="position-sticky pt-3">
+                    <ul class="nav flex-column">
+                        <li class="nav-item">
+                            <a class="nav-link" href="{% url 'portal:dashboard' %}">
+                                <i class="bi bi-speedometer2"></i> Dashboard
+                            </a>
+                        </li>
+
+                        <li class="nav-item mt-3">
+                            <h6 class="sidebar-heading px-3 mb-2 text-muted text-uppercase">
+                                <small>Mis Cuentas</small>
+                            </h6>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="#">
+                                <i class="bi bi-list-ul"></i> Ver Mis Cuentas
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="#">
+                                <i class="bi bi-plus-circle"></i> Nueva Cuenta
+                            </a>
+                        </li>
+
+                        <li class="nav-item mt-3">
+                            <h6 class="sidebar-heading px-3 mb-2 text-muted text-uppercase">
+                                <small>Operaciones</small>
+                            </h6>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="#">
+                                <i class="bi bi-arrow-down-circle"></i> Depósitos
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="#">
+                                <i class="bi bi-arrow-up-circle"></i> Retiros
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="#">
+                                <i class="bi bi-arrow-left-right"></i> Transferencias
+                            </a>
+                        </li>
+
+                        <li class="nav-item mt-3">
+                            <h6 class="sidebar-heading px-3 mb-2 text-muted text-uppercase">
+                                <small>Consultas</small>
+                            </h6>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="#">
+                                <i class="bi bi-clock-history"></i> Movimientos
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+            </nav>
+
+            <!-- Main Content -->
+            <main class="col-md-10 ms-sm-auto main-content">
+                <!-- Mensajes -->
+                {% if messages %}
+                    {% for message in messages %}
+                        <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                            {{ message }}
+                            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                        </div>
+                    {% endfor %}
+                {% endif %}
+
+                {% block content %}{% endblock %}
+            </main>
+        </div>
+    </div>
+    {% else %}
+    <!-- Content para usuarios no autenticados -->
+    <main class="flex-grow-1">
+        {% if messages %}
+            <div class="container mt-3">
+                {% for message in messages %}
+                    <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                        {{ message }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    </div>
+                {% endfor %}
+            </div>
+        {% endif %}
+
+        {% block content %}{% endblock %}
+    </main>
+    {% endif %}
+
+    <!-- Bootstrap 5 JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+    {% block extra_js %}{% endblock %}
+
+    <script>
+        // Timeout de sesión - advertencia
+        let tiempoInactivo = 0;
+        const TIEMPO_MAXIMO = 50; // 50 segundos (advertencia antes del minuto)
+
+        setInterval(() => {
+            tiempoInactivo++;
+            if (tiempoInactivo >= TIEMPO_MAXIMO && tiempoInactivo < 60) {
+                mostrarAdvertenciaTimeout();
+            }
+        }, 1000);
+
+        // Resetear contador con actividad
+        document.addEventListener('mousemove', () => tiempoInactivo = 0);
+        document.addEventListener('keypress', () => tiempoInactivo = 0);
+        document.addEventListener('click', () => tiempoInactivo = 0);
+
+        function mostrarAdvertenciaTimeout() {
+            if (!document.getElementById('timeoutAlert')) {
+                const alert = document.createElement('div');
+                alert.id = 'timeoutAlert';
+                alert.className = 'alert alert-warning position-fixed top-0 start-50 translate-middle-x mt-3';
+                alert.style.zIndex = '9999';
+                alert.innerHTML = '<i class="bi bi-exclamation-triangle"></i> Su sesión está por expirar por inactividad';
+                document.body.appendChild(alert);
+
+                setTimeout(() => {
+                    const el = document.getElementById('timeoutAlert');
+                    if (el) el.remove();
+                }, 5000);
+            }
+        }
+    </script>
+</body>
+</html>
