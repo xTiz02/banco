@@ -10,6 +10,7 @@ urlpatterns = [
     path('cuentas/', include('cuentas.urls')),
     path('operaciones/', include('operaciones.urls')),
     path('reportes/', include('reportes.urls')),
+    path('portal/', include('portal_cliente.urls')),
 ]
 
 if settings.DEBUG:

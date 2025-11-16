@@ -1,0 +1,265 @@
+{% extends 'portal_cliente/base_portal.html' %}
+
+{% block title %}Realizar Transferencia - Portal del Cliente{% endblock %}
+
+{% block content1 %}
+<div class="row justify-content-center">
+    <div class="col-lg-8">
+        <div class="card card-custom">
+            <div class="card-header bg-info text-white">
+                <h4 class="mb-0">
+                    <i class="bi bi-arrow-left-right"></i> Realizar Transferencia
+                </h4>
+            </div>
+            <div class="card-body p-4">
+                <!-- Información -->
+                <div class="alert alert-info mb-4">
+                    <h6 class="alert-heading"><i class="bi bi-info-circle"></i> Información</h6>
+                    <ul class="mb-0 small">
+                        <li>Puede transferir entre cuentas de <strong>Ahorro</strong> y <strong>Corriente</strong></li>
+                        <li>Puede transferir a cuentas propias o de terceros</li>
+                        <li>Si las cuentas son de diferente moneda, se aplicará el tipo de cambio vigente</li>
+                        <li>El monto no puede exceder el saldo disponible de la cuenta origen</li>
+                    </ul>
+                </div>
+
+                <!-- Formulario -->
+                <form method="post" id="formTransferencia">
+                    {% csrf_token %}
+
+                    <!-- Cuenta Origen -->
+                    <div class="mb-4">
+                        <label for="{{ form.cuenta_origen.id_for_label }}" class="form-label fw-bold">
+                            <i class="bi bi-wallet2"></i> Cuenta Origen *
+                        </label>
+                        {{ form.cuenta_origen }}
+                        {% if form.cuenta_origen.errors %}
+                            <div class="text-danger small mt-1">{{ form.cuenta_origen.errors }}</div>
+                        {% endif %}
+                    </div>
+
+                    <!-- Info Cuenta Origen -->
+                    <div class="alert alert-light border mb-4" id="infoCuentaOrigen" style="display: none;">
+                        <div class="row">
+                            <div class="col-6">
+                                <small class="text-muted">Saldo disponible:</small><br>
+                                <strong class="text-success" id="saldoDisponible">S/ 0.00</strong>
+                            </div>
+                            <div class="col-6">
+                                <small class="text-muted">Moneda:</small><br>
+                                <strong id="monedaOrigen">-</strong>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Cuenta Destino -->
+                    <div class="mb-4">
+                        <label for="{{ form.numero_cuenta_destino.id_for_label }}" class="form-label fw-bold">
+                            <i class="bi bi-credit-card"></i> Número de Cuenta Destino *
+                        </label>
+                        {{ form.numero_cuenta_destino }}
+                        {% if form.numero_cuenta_destino.errors %}
+                            <div class="text-danger small mt-1">{{ form.numero_cuenta_destino.errors }}</div>
+                        {% endif %}
+                        <small class="form-text text-muted d-block mt-1">
+                            Ingrese el número completo de la cuenta destino
+                        </small>
+                    </div>
+
+                    <!-- Monto -->
+                    <div class="mb-4">
+                        <label for="{{ form.monto.id_for_label }}" class="form-label fw-bold">
+                            <i class="bi bi-cash-stack"></i> Monto a Transferir *
+                        </label>
+                        <div class="input-group input-group-lg">
+                            <span class="input-group-text" id="simboloMoneda">S/</span>
+                            {{ form.monto }}
+                        </div>
+                        {% if form.monto.errors %}
+                            <div class="text-danger small mt-1">{{ form.monto.errors }}</div>
+                        {% endif %}
+                    </div>
+
+                    <!-- Descripción -->
+                    <div class="mb-4">
+                        <label for="{{ form.descripcion.id_for_label }}" class="form-label fw-bold">
+                            <i class="bi bi-chat-text"></i> Descripción (Opcional)
+                        </label>
+                        {{ form.descripcion }}
+                        {% if form.descripcion.errors %}
+                            <div class="text-danger small mt-1">{{ form.descripcion.errors }}</div>
+                        {% endif %}
+                    </div>
+
+                    <!-- Advertencias -->
+                    <div class="alert alert-danger" id="alertSaldoInsuficiente" style="display: none;">
+                        <i class="bi bi-exclamation-triangle"></i>
+                        <strong>Error:</strong> El monto excede su saldo disponible.
+                    </div>
+
+                    <div class="alert alert-warning" id="alertConversion" style="display: none;">
+                        <i class="bi bi-info-circle"></i>
+                        <strong>Nota:</strong> Se aplicará conversión de moneda según el tipo de cambio vigente.
+                    </div>
+
+                    <!-- Errores generales -->
+                    {% if form.non_field_errors %}
+                        <div class="alert alert-danger">
+                            {{ form.non_field_errors }}
+                        </div>
+                    {% endif %}
+
+                    <!-- Resumen -->
+                    <div class="card bg-light mb-4" id="resumenTransferencia" style="display: none;">
+                        <div class="card-body">
+                            <h6 class="fw-bold mb-3">Resumen de la Transferencia</h6>
+                            <div class="row mb-2">
+                                <div class="col-6">
+                                    <small class="text-muted">Monto a transferir:</small>
+                                </div>
+                                <div class="col-6 text-end">
+                                    <strong class="text-primary" id="resumenMonto">S/ 0.00</strong>
+                                </div>
+                            </div>
+                            <div class="row mb-2">
+                                <div class="col-6">
+                                    <small class="text-muted">Saldo después:</small>
+                                </div>
+                                <div class="col-6 text-end">
+                                    <strong id="saldoFinal">S/ 0.00</strong>
+                                </div>
+                            </div>
+                            <hr>
+                            <div class="row">
+                                <div class="col-12">
+                                    <small class="text-muted">Cuenta destino:</small><br>
+                                    <strong id="resumenDestino">-</strong>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Botones -->
+                    <div class="d-grid gap-2">
+                        <button type="submit" class="btn btn-info btn-lg text-white" id="btnTransferir">
+                            <i class="bi bi-check-circle"></i> Realizar Transferencia
+                        </button>
+                        <a href="{% url 'portal:dashboard' %}" class="btn btn-outline-secondary">
+                            <i class="bi bi-arrow-left"></i> Cancelar
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const cuentaOrigenSelect = document.querySelector('select[name="cuenta_origen"]');
+    const cuentaDestinoInput = document.querySelector('input[name="numero_cuenta_destino"]');
+    const montoInput = document.querySelector('input[name="monto"]');
+    const infoCuentaOrigen = document.getElementById('infoCuentaOrigen');
+    const saldoDisponibleEl = document.getElementById('saldoDisponible');
+    const monedaOrigenEl = document.getElementById('monedaOrigen');
+    const simboloMoneda = document.getElementById('simboloMoneda');
+    const alertSaldoInsuficiente = document.getElementById('alertSaldoInsuficiente');
+    const resumenTransferencia = document.getElementById('resumenTransferencia');
+    const resumenMonto = document.getElementById('resumenMonto');
+    const saldoFinal = document.getElementById('saldoFinal');
+    const resumenDestino = document.getElementById('resumenDestino');
+    const btnTransferir = document.getElementById('btnTransferir');
+
+    let saldoActual = 0;
+    let monedaActual = 'SOLES';
+
+    function getSaldoDisponible() {
+        const selectedOption = cuentaOrigenSelect.options[cuentaOrigenSelect.selectedIndex];
+        if (selectedOption && selectedOption.value) {
+            const text = selectedOption.text;
+            const match = text.match(/Disponible:\s*([\d,.]+)/);
+            if (match) {
+                return parseFloat(match[1].replace(',', ''));
+            }
+        }
+        return 0;
+    }
+
+    function getMoneda() {
+        const selectedOption = cuentaOrigenSelect.options[cuentaOrigenSelect.selectedIndex];
+        if (selectedOption && selectedOption.value) {
+            const text = selectedOption.text;
+            if (text.includes('Dólares') || text.includes('$')) {
+                return 'DOLARES';
+            }
+        }
+        return 'SOLES';
+    }
+
+    cuentaOrigenSelect.addEventListener('change', function() {
+        if (this.value) {
+            saldoActual = getSaldoDisponible();
+            monedaActual = getMoneda();
+            
+            infoCuentaOrigen.style.display = 'block';
+            saldoDisponibleEl.textContent = (monedaActual === 'SOLES' ? 'S/ ' : '$ ') + saldoActual.toFixed(2);
+            monedaOrigenEl.textContent = monedaActual === 'SOLES' ? 'Soles' : 'Dólares';
+            simboloMoneda.textContent = monedaActual === 'SOLES' ? 'S/' : '$';
+        } else {
+            infoCuentaOrigen.style.display = 'none';
+        }
+        
+        validarMonto();
+    });
+
+    function validarMonto() {
+        const monto = parseFloat(montoInput.value) || 0;
+        const cuentaDestino = cuentaDestinoInput.value.trim();
+
+        if (monto > 0 && cuentaOrigenSelect.value) {
+            resumenTransferencia.style.display = 'block';
+            resumenMonto.textContent = (monedaActual === 'SOLES' ? 'S/ ' : '$ ') + monto.toFixed(2);
+            
+            const nuevoSaldo = saldoActual - monto;
+            saldoFinal.textContent = (monedaActual === 'SOLES' ? 'S/ ' : '$ ') + nuevoSaldo.toFixed(2);
+
+            if (cuentaDestino) {
+                resumenDestino.textContent = cuentaDestino;
+            } else {
+                resumenDestino.textContent = '-';
+            }
+
+            if (monto > saldoActual) {
+                alertSaldoInsuficiente.style.display = 'block';
+                btnTransferir.disabled = true;
+                saldoFinal.classList.add('text-danger');
+                saldoFinal.classList.remove('text-success');
+            } else {
+                alertSaldoInsuficiente.style.display = 'none';
+                btnTransferir.disabled = false;
+                saldoFinal.classList.add('text-success');
+                saldoFinal.classList.remove('text-danger');
+            }
+        } else {
+            resumenTransferencia.style.display = 'none';
+            alertSaldoInsuficiente.style.display = 'none';
+        }
+    }
+
+    montoInput.addEventListener('input', validarMonto);
+    cuentaDestinoInput.addEventListener('input', validarMonto);
+
+    // Validar formato de cuenta destino
+    cuentaDestinoInput.addEventListener('blur', function() {
+        const cuenta = this.value.trim();
+        if (cuenta && cuenta.length < 10) {
+            this.classList.add('is-invalid');
+        } else {
+            this.classList.remove('is-invalid');
+        }
+    });
+});
+</script>
+{% endblock %}

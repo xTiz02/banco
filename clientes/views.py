@@ -79,9 +79,9 @@ def crear_cliente(request):
                 nombres=datos_reniec['nombres'],
                 apellido_paterno=datos_reniec['apellido_paterno'],
                 apellido_materno=datos_reniec['apellido_materno'],
-                fecha_nacimiento=datos_reniec.get('fecha_nacimiento'),
+                fecha_nacimiento=cliente.fecha_nacimiento,
                 ubigeo=datos_reniec.get('ubigeo'),
-                direccion=datos_reniec.get('direccion')
+                direccion=cliente.direccion,
               )
 
             except ValidationError as e:

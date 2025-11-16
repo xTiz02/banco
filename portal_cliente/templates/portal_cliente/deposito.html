@@ -1,0 +1,149 @@
+{% extends 'portal_cliente/base_portal.html' %}
+
+{% block title %}Realizar Depósito - Portal del Cliente{% endblock %}
+
+{% block content1 %}
+<div class="row justify-content-center">
+    <div class="col-lg-7">
+        <div class="card card-custom">
+            <div class="card-header bg-success text-white">
+                <h4 class="mb-0">
+                    <i class="bi bi-arrow-down-circle"></i> Realizar Depósito
+                </h4>
+            </div>
+            <div class="card-body p-4">
+                <!-- Información -->
+                <div class="alert alert-info mb-4">
+                    <h6 class="alert-heading"><i class="bi bi-info-circle"></i> Información</h6>
+                    <ul class="mb-0 small">
+                        <li>Puede depositar en sus cuentas de <strong>Ahorro</strong> y <strong>Corriente</strong></li>
+                        <li>El monto debe ser mayor a cero</li>
+                        <li>Para depósitos <strong>mayores a S/ 2,000</strong> debe indicar el origen de los fondos</li>
+                    </ul>
+                </div>
+
+                <!-- Formulario -->
+                <form method="post" id="formDeposito">
+                    {% csrf_token %}
+
+                    <!-- Seleccionar Cuenta -->
+                    <div class="mb-4">
+                        <label for="{{ form.cuenta.id_for_label }}" class="form-label fw-bold">
+                            <i class="bi bi-wallet2"></i> Cuenta de Destino *
+                        </label>
+                        {{ form.cuenta }}
+                        {% if form.cuenta.errors %}
+                            <div class="text-danger small mt-1">{{ form.cuenta.errors }}</div>
+                        {% endif %}
+                        <small class="form-text text-muted d-block mt-1">
+                            Seleccione la cuenta donde desea depositar
+                        </small>
+                    </div>
+
+                    <!-- Monto -->
+                    <div class="mb-4">
+                        <label for="{{ form.monto.id_for_label }}" class="form-label fw-bold">
+                            <i class="bi bi-cash-stack"></i> Monto a Depositar *
+                        </label>
+                        <div class="input-group input-group-lg">
+                            <span class="input-group-text">S/</span>
+                            {{ form.monto }}
+                        </div>
+                        {% if form.monto.errors %}
+                            <div class="text-danger small mt-1">{{ form.monto.errors }}</div>
+                        {% endif %}
+                    </div>
+
+                    <!-- Origen de Fondos (condicional) -->
+                    <div class="mb-4" id="divOrigenFondos" style="display: none;">
+                        <label for="{{ form.origen_fondos.id_for_label }}" class="form-label fw-bold">
+                            <i class="bi bi-file-text"></i> Origen de Fondos *
+                        </label>
+                        {{ form.origen_fondos }}
+                        <small class="form-text text-muted d-block mt-1">
+                            {{ form.origen_fondos.help_text }}
+                        </small>
+                        {% if form.origen_fondos.errors %}
+                            <div class="text-danger small mt-1">{{ form.origen_fondos.errors }}</div>
+                        {% endif %}
+                    </div>
+
+                    <!-- Advertencia para montos grandes -->
+                    <div class="alert alert-warning" id="alertMontoGrande" style="display: none;">
+                        <i class="bi bi-exclamation-triangle"></i>
+                        <strong>Atención:</strong> Para depósitos mayores a S/ 2,000 debe especificar el origen de los fondos.
+                    </div>
+
+                    <!-- Errores generales -->
+                    {% if form.non_field_errors %}
+                        <div class="alert alert-danger">
+                            {{ form.non_field_errors }}
+                        </div>
+                    {% endif %}
+
+                    <!-- Resumen -->
+                    <div class="card bg-light mb-4" id="resumenDeposito" style="display: none;">
+                        <div class="card-body">
+                            <h6 class="fw-bold mb-3">Resumen del Depósito</h6>
+                            <div class="row">
+                                <div class="col-6">
+                                    <small class="text-muted">Monto a depositar:</small>
+                                </div>
+                                <div class="col-6 text-end">
+                                    <strong id="resumenMonto">S/ 0.00</strong>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Botones -->
+                    <div class="d-grid gap-2">
+                        <button type="submit" class="btn btn-success btn-lg">
+                            <i class="bi bi-check-circle"></i> Realizar Depósito
+                        </button>
+                        <a href="{% url 'portal:dashboard' %}" class="btn btn-outline-secondary">
+                            <i class="bi bi-arrow-left"></i> Cancelar
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const montoInput = document.getElementById('montoDeposito');
+    const origenFondosDiv = document.getElementById('divOrigenFondos');
+    const origenFondosTextarea = document.getElementById('origenFondos');
+    const alertMontoGrande = document.getElementById('alertMontoGrande');
+    const resumenDeposito = document.getElementById('resumenDeposito');
+    const resumenMonto = document.getElementById('resumenMonto');
+
+    montoInput.addEventListener('input', function() {
+        const monto = parseFloat(this.value) || 0;
+
+        // Mostrar/ocultar campo de origen de fondos
+        if (monto > 2000) {
+            origenFondosDiv.style.display = 'block';
+            alertMontoGrande.style.display = 'block';
+            origenFondosTextarea.required = true;
+        } else {
+            origenFondosDiv.style.display = 'none';
+            alertMontoGrande.style.display = 'none';
+            origenFondosTextarea.required = false;
+        }
+
+        // Mostrar resumen
+        if (monto > 0) {
+            resumenDeposito.style.display = 'block';
+            resumenMonto.textContent = 'S/ ' + monto.toFixed(2);
+        } else {
+            resumenDeposito.style.display = 'none';
+        }
+    });
+});
+</script>
+{% endblock %}

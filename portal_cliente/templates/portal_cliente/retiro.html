@@ -1,0 +1,199 @@
+{% extends 'portal_cliente/base_portal.html' %}
+
+{% block title %}Realizar Retiro - Portal del Cliente{% endblock %}
+
+{% block content1 %}
+<div class="row justify-content-center">
+    <div class="col-lg-7">
+        <div class="card card-custom">
+            <div class="card-header bg-warning text-white">
+                <h4 class="mb-0">
+                    <i class="bi bi-arrow-up-circle"></i> Realizar Retiro
+                </h4>
+            </div>
+            <div class="card-body p-4">
+                <!-- Información -->
+                <div class="alert alert-info mb-4">
+                    <h6 class="alert-heading"><i class="bi bi-info-circle"></i> Información</h6>
+                    <ul class="mb-0 small">
+                        <li>Puede retirar de sus cuentas de <strong>Ahorro</strong> y <strong>Corriente</strong></li>
+                        <li>En cuentas de <strong>Ahorro</strong>, el retiro no puede exceder el saldo disponible</li>
+                        <li>En cuentas <strong>Corrientes</strong>, puede generar sobregiro hasta el límite establecido</li>
+                        <li><strong>No se pueden realizar retiros</strong> de cuentas a Plazo Fijo</li>
+                    </ul>
+                </div>
+
+                <!-- Formulario -->
+                <form method="post" id="formRetiro">
+                    {% csrf_token %}
+
+                    <!-- Seleccionar Cuenta -->
+                    <div class="mb-4">
+                        <label for="{{ form.cuenta.id_for_label }}" class="form-label fw-bold">
+                            <i class="bi bi-wallet2"></i> Cuenta de Origen *
+                        </label>
+                        {{ form.cuenta }}
+                        {% if form.cuenta.errors %}
+                            <div class="text-danger small mt-1">{{ form.cuenta.errors }}</div>
+                        {% endif %}
+                        <small class="form-text text-muted d-block mt-1">
+                            Seleccione la cuenta de donde desea retirar
+                        </small>
+                    </div>
+
+                    <!-- Información de la cuenta seleccionada -->
+                    <div class="alert alert-light border" id="infoCuenta" style="display: none;">
+                        <div class="row">
+                            <div class="col-6">
+                                <small class="text-muted">Tipo de cuenta:</small><br>
+                                <strong id="tipoCuenta">-</strong>
+                            </div>
+                            <div class="col-6">
+                                <small class="text-muted">Saldo disponible:</small><br>
+                                <strong class="text-success" id="saldoDisponible">S/ 0.00</strong>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Monto -->
+                    <div class="mb-4">
+                        <label for="{{ form.monto.id_for_label }}" class="form-label fw-bold">
+                            <i class="bi bi-cash-stack"></i> Monto a Retirar *
+                        </label>
+                        <div class="input-group input-group-lg">
+                            <span class="input-group-text">S/</span>
+                            {{ form.monto }}
+                        </div>
+                        {% if form.monto.errors %}
+                            <div class="text-danger small mt-1">{{ form.monto.errors }}</div>
+                        {% endif %}
+                        <small class="form-text text-muted d-block mt-1">
+                            Ingrese el monto que desea retirar
+                        </small>
+                    </div>
+
+                    <!-- Advertencia de saldo insuficiente -->
+                    <div class="alert alert-danger" id="alertSaldoInsuficiente" style="display: none;">
+                        <i class="bi bi-exclamation-triangle"></i>
+                        <strong>Atención:</strong> El monto ingresado excede su saldo disponible.
+                    </div>
+
+                    <!-- Errores generales -->
+                    {% if form.non_field_errors %}
+                        <div class="alert alert-danger">
+                            {{ form.non_field_errors }}
+                        </div>
+                    {% endif %}
+
+                    <!-- Resumen -->
+                    <div class="card bg-light mb-4" id="resumenRetiro" style="display: none;">
+                        <div class="card-body">
+                            <h6 class="fw-bold mb-3">Resumen del Retiro</h6>
+                            <div class="row mb-2">
+                                <div class="col-6">
+                                    <small class="text-muted">Monto a retirar:</small>
+                                </div>
+                                <div class="col-6 text-end">
+                                    <strong class="text-danger" id="resumenMonto">S/ 0.00</strong>
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="col-6">
+                                    <small class="text-muted">Saldo después del retiro:</small>
+                                </div>
+                                <div class="col-6 text-end">
+                                    <strong id="saldoFinal">S/ 0.00</strong>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Botones -->
+                    <div class="d-grid gap-2">
+                        <button type="submit" class="btn btn-warning btn-lg" id="btnRetirar">
+                            <i class="bi bi-check-circle"></i> Realizar Retiro
+                        </button>
+                        <a href="{% url 'portal:dashboard' %}" class="btn btn-outline-secondary">
+                            <i class="bi bi-arrow-left"></i> Cancelar
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const cuentaSelect = document.getElementById('cuentaRetiro');
+    const montoInput = document.querySelector('input[name="monto"]');
+    const infoCuenta = document.getElementById('infoCuenta');
+    const alertSaldoInsuficiente = document.getElementById('alertSaldoInsuficiente');
+    const resumenRetiro = document.getElementById('resumenRetiro');
+    const resumenMonto = document.getElementById('resumenMonto');
+    const saldoFinal = document.getElementById('saldoFinal');
+    const btnRetirar = document.getElementById('btnRetirar');
+
+    // Extraer saldo de la opción seleccionada
+    function getSaldoDisponible() {
+        const selectedOption = cuentaSelect.options[cuentaSelect.selectedIndex];
+        if (selectedOption && selectedOption.value) {
+            const text = selectedOption.text;
+            const match = text.match(/Disponible:\s*([\d,.]+)/);
+            if (match) {
+                return parseFloat(match[1].replace(',', ''));
+            }
+        }
+        return 0;
+    }
+
+    cuentaSelect.addEventListener('change', function() {
+        if (this.value) {
+            const saldo = getSaldoDisponible();
+            infoCuenta.style.display = 'block';
+            document.getElementById('saldoDisponible').textContent = 'S/ ' + saldo.toFixed(2);
+            
+            // Extraer tipo de cuenta
+            const selectedText = this.options[this.selectedIndex].text;
+            const tipoCuentaMatch = selectedText.match(/- ([^-]+) -/);
+            if (tipoCuentaMatch) {
+                document.getElementById('tipoCuenta').textContent = tipoCuentaMatch[1];
+            }
+        } else {
+            infoCuenta.style.display = 'none';
+        }
+    });
+
+    montoInput.addEventListener('input', function() {
+        const monto = parseFloat(this.value) || 0;
+        const saldo = getSaldoDisponible();
+
+        if (monto > 0) {
+            resumenRetiro.style.display = 'block';
+            resumenMonto.textContent = 'S/ ' + monto.toFixed(2);
+            
+            const nuevoSaldo = saldo - monto;
+            saldoFinal.textContent = 'S/ ' + nuevoSaldo.toFixed(2);
+
+            if (monto > saldo) {
+                alertSaldoInsuficiente.style.display = 'block';
+                btnRetirar.disabled = true;
+                saldoFinal.classList.add('text-danger');
+                saldoFinal.classList.remove('text-success');
+            } else {
+                alertSaldoInsuficiente.style.display = 'none';
+                btnRetirar.disabled = false;
+                saldoFinal.classList.add('text-success');
+                saldoFinal.classList.remove('text-danger');
+            }
+        } else {
+            resumenRetiro.style.display = 'none';
+            alertSaldoInsuficiente.style.display = 'none';
+            btnRetirar.disabled = false;
+        }
+    });
+});
+</script>
+{% endblock %}

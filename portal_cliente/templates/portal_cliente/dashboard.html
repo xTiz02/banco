@@ -2,7 +2,7 @@
 
 {% block title %}Mi Dashboard - Portal del Cliente{% endblock %}
 
-{% block content %}
+{% block content1 %}
 <!-- Encabezado de Bienvenida -->
 <div class="mb-4">
     <h2 class="fw-bold">¡Bienvenido, {{ cliente.nombres }}!</h2>
@@ -63,7 +63,7 @@
                     <h5 class="mb-0 fw-bold">
                         <i class="bi bi-wallet2"></i> Mis Cuentas
                     </h5>
-                    <a href="#" class="btn btn-sm btn-primary">
+                    <a href="{% url 'portal:apertura_cuenta' %}" class="btn btn-sm btn-primary">
                         <i class="bi bi-plus-circle"></i> Nueva Cuenta
                     </a>
                 </div>
@@ -80,30 +80,30 @@
                                         {{ cuenta.get_tipo_cuenta_display }}
                                     </span>
                                 </div>
-                                <span class="badge badge-custom 
+                                <span class="badge badge-custom
                                     {% if cuenta.estado == 'ACTIVA' %}bg-success
                                     {% else %}bg-warning{% endif %}">
                                     {{ cuenta.get_estado_display }}
                                 </span>
                             </div>
-                            
+
                             <div class="mb-2">
                                 <small class="opacity-75">Número de Cuenta</small>
                                 <h5 class="mb-0">{{ cuenta.numero_cuenta }}</h5>
                             </div>
-                            
+
                             <div class="mb-3">
                                 <small class="opacity-75">Saldo Disponible</small>
                                 <div class="saldo-display">
                                     {{ cuenta.get_moneda_display }} {{ cuenta.get_saldo_disponible|floatformat:2 }}
                                 </div>
                             </div>
-                            
+
                             <div class="d-flex gap-2">
-                                <a href="#" class="btn btn-light btn-sm flex-fill">
+                                <a href="{% url 'portal:detalle_cuenta_cliente' cuenta.id %}" class="btn btn-light btn-sm flex-fill">
                                     <i class="bi bi-eye"></i> Ver Detalle
                                 </a>
-                                <a href="#" class="btn btn-light btn-sm flex-fill">
+                                <a href="{% url 'portal:transferencia' %}" class="btn btn-light btn-sm flex-fill">
                                     <i class="bi bi-arrow-left-right"></i> Transferir
                                 </a>
                             </div>
@@ -115,7 +115,7 @@
                 <div class="text-center py-5">
                     <i class="bi bi-inbox" style="font-size: 4rem; color: #ddd;"></i>
                     <p class="text-muted mt-3">No tienes cuentas activas</p>
-                    <a href="#" class="btn btn-primary">
+                    <a href="{% url 'portal:apertura_cuenta' %}" class="btn btn-primary">
                         <i class="bi bi-plus-circle"></i> Aperturar Mi Primera Cuenta
                     </a>
                 </div>
@@ -158,7 +158,7 @@
                                     <small><code>{{ mov.cuenta.numero_cuenta }}</code></small>
                                 </td>
                                 <td>
-                                    <span class="badge 
+                                    <span class="badge
                                         {% if mov.tipo_movimiento == 'DEPOSITO' %}bg-success
                                         {% elif mov.tipo_movimiento == 'RETIRO' %}bg-warning
                                         {% elif 'TRANSFERENCIA' in mov.tipo_movimiento %}bg-info
@@ -185,7 +185,7 @@
                     </table>
                 </div>
                 <div class="text-center mt-3">
-                    <a href="#" class="btn btn-outline-primary">
+                    <a href="{% url 'portal:mis_cuentas' %}" class="btn btn-outline-primary">
                         Ver Todos los Movimientos
                     </a>
                 </div>
@@ -208,25 +208,25 @@
                 <h6 class="fw-bold mb-3">Accesos Rápidos</h6>
                 <div class="row g-3">
                     <div class="col-md-3">
-                        <a href="#" class="btn btn-outline-primary w-100">
+                        <a href="{% url 'portal:deposito' %}" class="btn btn-outline-primary w-100">
                             <i class="bi bi-arrow-down-circle"></i><br>
                             <small>Depositar</small>
                         </a>
                     </div>
                     <div class="col-md-3">
-                        <a href="#" class="btn btn-outline-warning w-100">
+                        <a href="{% url 'portal:retiro' %}" class="btn btn-outline-warning w-100">
                             <i class="bi bi-arrow-up-circle"></i><br>
                             <small>Retirar</small>
                         </a>
                     </div>
                     <div class="col-md-3">
-                        <a href="#" class="btn btn-outline-info w-100">
+                        <a href="{% url 'portal:transferencia' %}" class="btn btn-outline-info w-100">
                             <i class="bi bi-arrow-left-right"></i><br>
                             <small>Transferir</small>
                         </a>
                     </div>
                     <div class="col-md-3">
-                        <a href="#" class="btn btn-outline-success w-100">
+                        <a href="{% url 'portal:apertura_cuenta' %}" class="btn btn-outline-success w-100">
                             <i class="bi bi-plus-circle"></i><br>
                             <small>Nueva Cuenta</small>
                         </a>

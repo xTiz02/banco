@@ -1,0 +1,278 @@
+{% extends 'portal_cliente/base_portal.html' %}
+
+{% block title %}Detalle de Cuenta - Portal del Cliente{% endblock %}
+
+{% block content1 %}
+<!-- Encabezado -->
+<div class="row mb-4">
+    <div class="col-12">
+        <a href="{% url 'portal:mis_cuentas' %}" class="btn btn-outline-secondary mb-3">
+            <i class="bi bi-arrow-left"></i> Volver a Mis Cuentas
+        </a>
+        <h2 class="fw-bold mb-1">Detalle de Cuenta</h2>
+        <p class="text-muted mb-0">{{ cuenta.numero_cuenta }}</p>
+    </div>
+</div>
+
+<!-- Información de la Cuenta -->
+<div class="row mb-4">
+    <div class="col-lg-8">
+        <div class="card card-custom">
+            <div class="card-body p-4">
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <small class="text-muted d-block mb-1">Tipo de Cuenta</small>
+                        <h5 class="mb-0">
+                            <span class="badge bg-primary-subtle text-primary">
+                                {{ cuenta.get_tipo_cuenta_display }}
+                            </span>
+                            <span class="badge bg-info-subtle text-info ms-1">
+                                {{ cuenta.get_moneda_display }}
+                            </span>
+                        </h5>
+                    </div>
+                    <div class="col-md-6">
+                        <small class="text-muted d-block mb-1">Estado</small>
+                        <h5 class="mb-0">
+                            <span class="badge 
+                                {% if cuenta.estado == 'ACTIVA' %}bg-success
+                                {% elif cuenta.estado == 'INACTIVA' %}bg-warning
+                                {% elif cuenta.estado == 'EMBARGADA' %}bg-danger
+                                {% else %}bg-secondary{% endif %}">
+                                {{ cuenta.get_estado_display }}
+                            </span>
+                        </h5>
+                    </div>
+                </div>
+
+                <hr>
+
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <small class="text-muted d-block mb-1">Saldo Total</small>
+                        <h3 class="mb-0 fw-bold text-primary">
+                            {% if cuenta.moneda == 'SOLES' %}S/{% else %}${% endif %} 
+                            {{ cuenta.saldo|floatformat:2 }}
+                        </h3>
+                    </div>
+                    <div class="col-md-6">
+                        <small class="text-muted d-block mb-1">Saldo Disponible</small>
+                        <h3 class="mb-0 fw-bold text-success">
+                            {% if cuenta.moneda == 'SOLES' %}S/{% else %}${% endif %} 
+                            {{ saldo_disponible|floatformat:2 }}
+                        </h3>
+                    </div>
+                </div>
+
+                {% if cuenta.tipo_cuenta == 'PLAZO' %}
+                <hr>
+                <div class="alert alert-info mb-0">
+                    <h6 class="alert-heading mb-3">Información del Plazo Fijo</h6>
+                    <div class="row">
+                        <div class="col-md-4 mb-2">
+                            <small class="text-muted d-block">Monto Inicial</small>
+                            <strong>{% if cuenta.moneda == 'SOLES' %}S/{% else %}${% endif %} {{ cuenta.monto_inicial|floatformat:2 }}</strong>
+                        </div>
+                        <div class="col-md-4 mb-2">
+                            <small class="text-muted d-block">Plazo</small>
+                            <strong>{{ cuenta.plazo_meses }} meses</strong>
+                        </div>
+                        <div class="col-md-4 mb-2">
+                            <small class="text-muted d-block">Tasa Interés</small>
+                            <strong>{{ cuenta.tasa_interes_mensual }}% mensual</strong>
+                        </div>
+                        <div class="col-md-6 mb-2">
+                            <small class="text-muted d-block">Fecha Apertura</small>
+                            <strong>{{ cuenta.fecha_apertura|date:"d/m/Y" }}</strong>
+                        </div>
+                        <div class="col-md-6 mb-2">
+                            <small class="text-muted d-block">Fecha Vencimiento</small>
+                            <strong class="text-danger">{{ cuenta.fecha_vencimiento|date:"d/m/Y" }}</strong>
+                        </div>
+                    </div>
+                    {% if interes_generado %}
+                    <hr class="my-3">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <small class="text-muted d-block">Interés Generado a la Fecha</small>
+                            <h5 class="mb-0 text-success">
+                                {% if cuenta.moneda == 'SOLES' %}S/{% else %}${% endif %} 
+                                {{ interes_generado|floatformat:2 }}
+                            </h5>
+                        </div>
+                        <div class="col-md-6">
+                            <small class="text-muted d-block">Monto Total Proyectado</small>
+                            <h5 class="mb-0 text-primary">
+                                {% if cuenta.moneda == 'SOLES' %}S/{% else %}${% endif %} 
+                                {% widthratio cuenta.monto_inicial 1 1 as total %}
+                                {{ cuenta.monto_inicial|add:interes_generado|floatformat:2 }}
+                            </h5>
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+                {% endif %}
+
+                {% if cuenta.tipo_cuenta == 'CORRIENTE' %}
+                <hr>
+                <div class="alert alert-warning mb-0">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <small class="text-muted d-block">Límite de Sobregiro</small>
+                            <strong>{% if cuenta.moneda == 'SOLES' %}S/{% else %}${% endif %} {{ cuenta.monto_sobregiro|floatformat:2 }}</strong>
+                        </div>
+                        <div class="col-md-6">
+                            <small class="text-muted d-block">Sobregiro Disponible</small>
+                            <strong class="text-success">{% if cuenta.moneda == 'SOLES' %}S/{% else %}${% endif %} {{ cuenta.monto_sobregiro|floatformat:2 }}</strong>
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+
+                {% if cuenta.monto_embargado > 0 %}
+                <hr>
+                <div class="alert alert-danger mb-0">
+                    <h6 class="alert-heading">
+                        <i class="bi bi-exclamation-triangle"></i> Cuenta con Embargo
+                    </h6>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <small class="text-muted d-block">Monto Embargado</small>
+                            <strong>{% if cuenta.moneda == 'SOLES' %}S/{% else %}${% endif %} {{ cuenta.monto_embargado|floatformat:2 }}</strong>
+                        </div>
+                        <div class="col-md-6">
+                            <small class="text-muted d-block">Tipo de Embargo</small>
+                            <strong>{% if cuenta.embargo_total %}Total{% else %}Parcial{% endif %}</strong>
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Acciones Rápidas -->
+    <div class="col-lg-4">
+        <div class="card card-custom">
+            <div class="card-header bg-light">
+                <h6 class="mb-0 fw-bold">Acciones Rápidas</h6>
+            </div>
+            <div class="card-body">
+                <div class="d-grid gap-2">
+                    {% if cuenta.estado == 'ACTIVA' %}
+                        {% if cuenta.tipo_cuenta != 'PLAZO' %}
+                            <a href="{% url 'portal:deposito' %}" class="btn btn-success btn-sm">
+                                <i class="bi bi-arrow-down-circle"></i> Depositar
+                            </a>
+                            <a href="{% url 'portal:retiro' %}" class="btn btn-warning btn-sm">
+                                <i class="bi bi-arrow-up-circle"></i> Retirar
+                            </a>
+                            <a href="{% url 'portal:transferencia' %}" class="btn btn-info btn-sm text-white">
+                                <i class="bi bi-arrow-left-right"></i> Transferir
+                            </a>
+                        {% else %}
+                            <a href="{% url 'portal:operacion_plazo' cuenta.id %}" class="btn btn-warning btn-sm">
+                                <i class="bi bi-gear"></i> Cancelar/Renovar
+                            </a>
+                        {% endif %}
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <div class="card card-custom mt-3">
+            <div class="card-header bg-light">
+                <h6 class="mb-0 fw-bold">Información Adicional</h6>
+            </div>
+            <div class="card-body">
+                <small class="text-muted d-block mb-2">
+                    <i class="bi bi-calendar-check"></i> 
+                    <strong>Apertura:</strong> {{ cuenta.fecha_apertura|date:"d/m/Y H:i" }}
+                </small>
+                <small class="text-muted d-block mb-2">
+                    <i class="bi bi-clock"></i> 
+                    <strong>Último Movimiento:</strong> {{ cuenta.fecha_ultimo_movimiento|date:"d/m/Y H:i" }}
+                </small>
+                {% if cuenta.fecha_cierre %}
+                <small class="text-muted d-block">
+                    <i class="bi bi-x-circle"></i> 
+                    <strong>Cierre:</strong> {{ cuenta.fecha_cierre|date:"d/m/Y H:i" }}
+                </small>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Últimos Movimientos -->
+<div class="row">
+    <div class="col-12">
+        <div class="card card-custom">
+            <div class="card-header bg-white border-bottom">
+                <h5 class="mb-0 fw-bold">
+                    <i class="bi bi-clock-history"></i> Últimos 20 Movimientos
+                </h5>
+            </div>
+            <div class="card-body">
+                {% if movimientos %}
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Fecha y Hora</th>
+                                <th>Tipo</th>
+                                <th>Descripción</th>
+                                <th class="text-end">Monto</th>
+                                <th class="text-end">Saldo Anterior</th>
+                                <th class="text-end">Saldo Nuevo</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for mov in movimientos %}
+                            <tr>
+                                <td>
+                                    <small>{{ mov.fecha_hora|date:"d/m/Y" }}</small><br>
+                                    <small class="text-muted">{{ mov.fecha_hora|date:"H:i:s" }}</small>
+                                </td>
+                                <td>
+                                    <span class="badge 
+                                        {% if mov.tipo_movimiento == 'DEPOSITO' or 'RECIBIDA' in mov.tipo_movimiento %}bg-success
+                                        {% elif mov.tipo_movimiento == 'RETIRO' or 'ENVIADA' in mov.tipo_movimiento %}bg-warning
+                                        {% elif 'TRANSFERENCIA' in mov.tipo_movimiento %}bg-info
+                                        {% elif 'PLAZO' in mov.tipo_movimiento %}bg-primary
+                                        {% else %}bg-secondary{% endif %}">
+                                        {{ mov.get_tipo_movimiento_display }}
+                                    </span>
+                                </td>
+                                <td>
+                                    <small>{{ mov.descripcion|truncatewords:10 }}</small>
+                                </td>
+                                <td class="text-end">
+                                    {% if mov.tipo_movimiento == 'RETIRO' or 'ENVIADA' in mov.tipo_movimiento or mov.tipo_movimiento == 'CIERRE' %}
+                                        <span class="text-danger fw-bold">-{{ mov.monto|floatformat:2 }}</span>
+                                    {% else %}
+                                        <span class="text-success fw-bold">+{{ mov.monto|floatformat:2 }}</span>
+                                    {% endif %}
+                                </td>
+                                <td class="text-end">
+                                    <small>{{ mov.saldo_anterior|floatformat:2 }}</small>
+                                </td>
+                                <td class="text-end">
+                                    <strong>{{ mov.saldo_nuevo|floatformat:2 }}</strong>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <div class="text-center py-4">
+                    <i class="bi bi-inbox" style="font-size: 3rem; color: #ddd;"></i>
+                    <p class="text-muted mt-3">No hay movimientos registrados</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

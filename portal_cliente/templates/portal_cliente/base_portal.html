@@ -122,7 +122,7 @@
 </head>
 <body>
     {% if request.session.cliente_id %}
-    <!-- Navbar para usuarios autenticados -->
+    <!-- Layout para usuarios autenticados -->
     <nav class="navbar navbar-expand-lg navbar-portal">
         <div class="container-fluid">
             <a class="navbar-brand fw-bold text-primary" href="{% url 'portal:dashboard' %}">
@@ -173,12 +173,12 @@
                             </h6>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link" href="#">
+                            <a class="nav-link" href="{% url 'portal:mis_cuentas' %}">
                                 <i class="bi bi-list-ul"></i> Ver Mis Cuentas
                             </a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link" href="#">
+                            <a class="nav-link" href="{% url 'portal:apertura_cuenta' %}">
                                 <i class="bi bi-plus-circle"></i> Nueva Cuenta
                             </a>
                         </li>
@@ -189,17 +189,17 @@
                             </h6>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link" href="#">
+                            <a class="nav-link" href="{% url 'portal:deposito' %}">
                                 <i class="bi bi-arrow-down-circle"></i> Depósitos
                             </a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link" href="#">
+                            <a class="nav-link" href="{% url 'portal:retiro' %}">
                                 <i class="bi bi-arrow-up-circle"></i> Retiros
                             </a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link" href="#">
+                            <a class="nav-link" href="{% url 'portal:transferencia' %}">
                                 <i class="bi bi-arrow-left-right"></i> Transferencias
                             </a>
                         </li>
@@ -210,7 +210,7 @@
                             </h6>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link" href="#">
+                            <a class="nav-link" href="{% url 'portal:mis_cuentas' %}">
                                 <i class="bi bi-clock-history"></i> Movimientos
                             </a>
                         </li>
@@ -230,12 +230,13 @@
                     {% endfor %}
                 {% endif %}
 
-                {% block content %}{% endblock %}
+                {% block content1 %}{% endblock %}
             </main>
         </div>
     </div>
+
     {% else %}
-    <!-- Content para usuarios no autenticados -->
+    <!-- Layout para usuarios no autenticados -->
     <main class="flex-grow-1">
         {% if messages %}
             <div class="container mt-3">
@@ -248,7 +249,9 @@
             </div>
         {% endif %}
 
-        {% block content %}{% endblock %}
+        <div class="container">
+            {% block content %}{% endblock %}
+        </div>
     </main>
     {% endif %}
 
@@ -259,6 +262,7 @@
 
     <script>
         // Timeout de sesión - advertencia
+        {% if request.session.cliente_id %}
         let tiempoInactivo = 0;
         const TIEMPO_MAXIMO = 50; // 50 segundos (advertencia antes del minuto)
 
@@ -289,6 +293,7 @@
                 }, 5000);
             }
         }
+        {% endif %}
     </script>
 </body>
 </html>

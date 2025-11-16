@@ -1,0 +1,185 @@
+{% extends 'portal_cliente/base_portal.html' %}
+
+{% block title %}Aperturar Cuenta - Portal del Cliente{% endblock %}
+
+{% block content1 %}
+<div class="row justify-content-center">
+    <div class="col-lg-8">
+        <div class="card card-custom">
+            <div class="card-header bg-primary text-white">
+                <h4 class="mb-0">
+                    <i class="bi bi-plus-circle"></i> Aperturar Nueva Cuenta
+                </h4>
+            </div>
+            <div class="card-body p-4">
+                <!-- Información -->
+                <div class="alert alert-info mb-4">
+                    <h6 class="alert-heading"><i class="bi bi-info-circle"></i> Información Importante</h6>
+                    <ul class="mb-0 small">
+                        <li>Las cuentas de <strong>Ahorro</strong> y <strong>Corriente</strong> pueden abrirse con saldo cero</li>
+                        <li>Las cuentas a <strong>Plazo Fijo</strong> requieren un monto inicial, plazo e interés</li>
+                        <li>Puede aperturar cuentas en Soles (S/) o Dólares ($)</li>
+                    </ul>
+                </div>
+
+                <!-- Formulario -->
+                <form method="post" id="formApertura">
+                    {% csrf_token %}
+
+                    <div class="row">
+                        <!-- Tipo de Cuenta -->
+                        <div class="col-md-6 mb-3">
+                            <label for="{{ form.tipo_cuenta.id_for_label }}" class="form-label fw-bold">
+                                <i class="bi bi-wallet2"></i> Tipo de Cuenta *
+                            </label>
+                            {{ form.tipo_cuenta }}
+                            {% if form.tipo_cuenta.errors %}
+                                <div class="text-danger small mt-1">{{ form.tipo_cuenta.errors }}</div>
+                            {% endif %}
+                        </div>
+
+                        <!-- Moneda -->
+                        <div class="col-md-6 mb-3">
+                            <label for="{{ form.moneda.id_for_label }}" class="form-label fw-bold">
+                                <i class="bi bi-currency-exchange"></i> Moneda *
+                            </label>
+                            {{ form.moneda }}
+                            {% if form.moneda.errors %}
+                                <div class="text-danger small mt-1">{{ form.moneda.errors }}</div>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <!-- Campos para Plazo Fijo (inicialmente ocultos) -->
+                    <div id="camposPlazo" style="display: none;">
+                        <hr class="my-4">
+                        <h6 class="fw-bold mb-3 text-primary">
+                            <i class="bi bi-calendar-range"></i> Configuración de Plazo Fijo
+                        </h6>
+
+                        <div class="row">
+                            <!-- Monto Inicial -->
+                            <div class="col-md-4 mb-3">
+                                <label for="{{ form.monto_inicial.id_for_label }}" class="form-label fw-bold">
+                                    <i class="bi bi-cash-stack"></i> Monto Inicial *
+                                </label>
+                                {{ form.monto_inicial }}
+                                <small class="form-text text-muted">{{ form.monto_inicial.help_text }}</small>
+                                {% if form.monto_inicial.errors %}
+                                    <div class="text-danger small mt-1">{{ form.monto_inicial.errors }}</div>
+                                {% endif %}
+                            </div>
+
+                            <!-- Plazo en Meses -->
+                            <div class="col-md-4 mb-3">
+                                <label for="{{ form.plazo_meses.id_for_label }}" class="form-label fw-bold">
+                                    <i class="bi bi-calendar-month"></i> Plazo (meses) *
+                                </label>
+                                {{ form.plazo_meses }}
+                                <small class="form-text text-muted">{{ form.plazo_meses.help_text }}</small>
+                                {% if form.plazo_meses.errors %}
+                                    <div class="text-danger small mt-1">{{ form.plazo_meses.errors }}</div>
+                                {% endif %}
+                            </div>
+
+                            <!-- Tasa de Interés -->
+                            <div class="col-md-4 mb-3">
+                                <label for="{{ form.tasa_interes_mensual.id_for_label }}" class="form-label fw-bold">
+                                    <i class="bi bi-percent"></i> Tasa Interés (%) *
+                                </label>
+                                {{ form.tasa_interes_mensual }}
+                                <small class="form-text text-muted">{{ form.tasa_interes_mensual.help_text }}</small>
+                                {% if form.tasa_interes_mensual.errors %}
+                                    <div class="text-danger small mt-1">{{ form.tasa_interes_mensual.errors }}</div>
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        <!-- Calculadora de interés -->
+                        <div class="alert alert-success" id="calculoInteres" style="display: none;">
+                            <strong>Proyección de interés:</strong>
+                            <div id="resultadoInteres"></div>
+                        </div>
+                    </div>
+
+                    <!-- Errores generales del formulario -->
+                    {% if form.non_field_errors %}
+                        <div class="alert alert-danger mt-3">
+                            {{ form.non_field_errors }}
+                        </div>
+                    {% endif %}
+
+                    <!-- Botones -->
+                    <div class="d-grid gap-2 mt-4">
+                        <button type="submit" class="btn btn-primary btn-lg">
+                            <i class="bi bi-check-circle"></i> Aperturar Cuenta
+                        </button>
+                        <a href="{% url 'portal:mis_cuentas' %}" class="btn btn-outline-secondary">
+                            <i class="bi bi-arrow-left"></i> Cancelar
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const tipoCuentaSelect = document.getElementById('tipoCuenta');
+    const camposPlazo = document.getElementById('camposPlazo');
+    const montoInput = document.getElementById('montoInicial');
+    const plazoInput = document.getElementById('plazoMeses');
+    const tasaInput = document.getElementById('tasaInteres');
+    const calculoInteres = document.getElementById('calculoInteres');
+    const resultadoInteres = document.getElementById('resultadoInteres');
+
+    // Mostrar/ocultar campos de plazo fijo
+    tipoCuentaSelect.addEventListener('change', function() {
+        if (this.value === 'PLAZO') {
+            camposPlazo.style.display = 'block';
+        } else {
+            camposPlazo.style.display = 'none';
+        }
+    });
+
+    // Calcular interés proyectado
+    function calcularInteres() {
+        const monto = parseFloat(montoInput.value) || 0;
+        const plazo = parseInt(plazoInput.value) || 0;
+        const tasa = parseFloat(tasaInput.value) || 0;
+
+        if (monto > 0 && plazo > 0 && tasa > 0) {
+            const interes = monto * (tasa / 100) * plazo;
+            const total = monto + interes;
+
+            resultadoInteres.innerHTML = `
+                <div class="row mt-2">
+                    <div class="col-4">
+                        <small>Capital:</small><br>
+                        <strong>S/ ${monto.toFixed(2)}</strong>
+                    </div>
+                    <div class="col-4">
+                        <small>Interés estimado:</small><br>
+                        <strong class="text-success">S/ ${interes.toFixed(2)}</strong>
+                    </div>
+                    <div class="col-4">
+                        <small>Total al vencimiento:</small><br>
+                        <strong class="text-primary">S/ ${total.toFixed(2)}</strong>
+                    </div>
+                </div>
+            `;
+            calculoInteres.style.display = 'block';
+        } else {
+            calculoInteres.style.display = 'none';
+        }
+    }
+
+    montoInput.addEventListener('input', calcularInteres);
+    plazoInput.addEventListener('input', calcularInteres);
+    tasaInput.addEventListener('input', calcularInteres);
+});
+</script>
+{% endblock %}

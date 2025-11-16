@@ -1,0 +1,154 @@
+{% extends 'portal_cliente/base_portal.html' %}
+
+{% block title %}Cerrar Cuenta - Portal del Cliente{% endblock %}
+
+{% block content1 %}
+<div class="row justify-content-center">
+    <div class="col-lg-7">
+        <div class="card card-custom">
+            <div class="card-header bg-danger text-white">
+                <h4 class="mb-0">
+                    <i class="bi bi-x-circle"></i> Cerrar Cuenta
+                </h4>
+            </div>
+            <div class="card-body p-4">
+                <!-- Información de la cuenta -->
+                <div class="alert alert-light border mb-4">
+                    <h6 class="fw-bold mb-3">Información de la Cuenta</h6>
+                    <div class="row">
+                        <div class="col-md-6 mb-2">
+                            <small class="text-muted d-block">Número de Cuenta</small>
+                            <strong>{{ cuenta.numero_cuenta }}</strong>
+                        </div>
+                        <div class="col-md-6 mb-2">
+                            <small class="text-muted d-block">Tipo</small>
+                            <strong>{{ cuenta.get_tipo_cuenta_display }}</strong>
+                        </div>
+                        <div class="col-md-6 mb-2">
+                            <small class="text-muted d-block">Moneda</small>
+                            <strong>{{ cuenta.get_moneda_display }}</strong>
+                        </div>
+                        <div class="col-md-6 mb-2">
+                            <small class="text-muted d-block">Saldo Actual</small>
+                            <strong class="{% if cuenta.saldo == 0 %}text-success{% else %}text-danger{% endif %}">
+                                {% if cuenta.moneda == 'SOLES' %}S/{% else %}${% endif %} 
+                                {{ cuenta.saldo|floatformat:2 }}
+                            </strong>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Advertencias -->
+                <div class="alert alert-warning mb-4">
+                    <h6 class="alert-heading"><i class="bi bi-exclamation-triangle"></i> Advertencia</h6>
+                    <ul class="mb-0">
+                        <li>El cierre de la cuenta es <strong>irreversible</strong></li>
+                        <li>Solo puede cerrar cuentas con <strong>saldo cero</strong></li>
+                        <li>No debe tener embargos pendientes</li>
+                        <li>Después del cierre, no podrá realizar ninguna operación en esta cuenta</li>
+                    </ul>
+                </div>
+
+                {% if cuenta.saldo != 0 %}
+                <!-- No se puede cerrar -->
+                <div class="alert alert-danger">
+                    <h6 class="alert-heading"><i class="bi bi-x-circle"></i> No se puede cerrar la cuenta</h6>
+                    <p class="mb-2">La cuenta tiene un saldo de 
+                        <strong>{% if cuenta.moneda == 'SOLES' %}S/{% else %}${% endif %} {{ cuenta.saldo|floatformat:2 }}</strong>
+                    </p>
+                    <p class="mb-0">Para cerrar la cuenta, primero debe:</p>
+                    <ul class="mb-0 mt-2">
+                        <li>Retirar todo el saldo disponible, o</li>
+                        <li>Transferir el saldo a otra cuenta</li>
+                    </ul>
+                </div>
+
+                <div class="d-grid gap-2 mt-4">
+                    <a href="{% url 'portal:detalle_cuenta_cliente' cuenta.id %}" class="btn btn-primary">
+                        <i class="bi bi-arrow-left"></i> Volver al Detalle
+                    </a>
+                    <a href="{% url 'portal:retiro' %}" class="btn btn-warning">
+                        <i class="bi bi-arrow-up-circle"></i> Realizar Retiro
+                    </a>
+                    <a href="{% url 'portal:transferencia' %}" class="btn btn-info text-white">
+                        <i class="bi bi-arrow-left-right"></i> Transferir Saldo
+                    </a>
+                </div>
+
+                {% elif cuenta.monto_embargado > 0 %}
+                <!-- Tiene embargos -->
+                <div class="alert alert-danger">
+                    <h6 class="alert-heading"><i class="bi bi-x-circle"></i> No se puede cerrar la cuenta</h6>
+                    <p class="mb-0">La cuenta tiene un embargo de 
+                        <strong>{% if cuenta.moneda == 'SOLES' %}S/{% else %}${% endif %} {{ cuenta.monto_embargado|floatformat:2 }}</strong>
+                    </p>
+                    <p class="mt-2 mb-0">Debe contactarse con el banco para levantar el embargo antes de cerrar la cuenta.</p>
+                </div>
+
+                <div class="d-grid gap-2 mt-4">
+                    <a href="{% url 'portal:detalle_cuenta_cliente' cuenta.id %}" class="btn btn-primary">
+                        <i class="bi bi-arrow-left"></i> Volver al Detalle
+                    </a>
+                </div>
+
+                {% else %}
+                <!-- Puede cerrar la cuenta -->
+                <div class="alert alert-success mb-4">
+                    <i class="bi bi-check-circle"></i>
+                    <strong>La cuenta cumple los requisitos para ser cerrada</strong>
+                </div>
+
+                <!-- Formulario de confirmación -->
+                <form method="post">
+                    {% csrf_token %}
+
+                    <div class="mb-4">
+                        <label for="{{ form.confirmacion.id_for_label }}" class="form-label fw-bold">
+                            <i class="bi bi-shield-check"></i> Confirmación *
+                        </label>
+                        {{ form.confirmacion }}
+                        {% if form.confirmacion.errors %}
+                            <div class="text-danger small mt-1">{{ form.confirmacion.errors }}</div>
+                        {% endif %}
+                        <small class="form-text text-muted d-block mt-1">
+                            Para confirmar el cierre, escriba la palabra "CONFIRMAR" en mayúsculas
+                        </small>
+                    </div>
+
+                    {% if form.non_field_errors %}
+                        <div class="alert alert-danger">
+                            {{ form.non_field_errors }}
+                        </div>
+                    {% endif %}
+
+                    <div class="d-grid gap-2">
+                        <button type="submit" class="btn btn-danger btn-lg">
+                            <i class="bi bi-x-circle"></i> Cerrar Cuenta Definitivamente
+                        </button>
+                        <a href="{% url 'portal:detalle_cuenta_cliente' cuenta.id %}" class="btn btn-outline-secondary">
+                            <i class="bi bi-arrow-left"></i> Cancelar
+                        </a>
+                    </div>
+                </form>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const form = document.querySelector('form');
+    if (form) {
+        form.addEventListener('submit', function(e) {
+            const confirmacion = confirm('¿Está seguro que desea cerrar esta cuenta? Esta acción no se puede deshacer.');
+            if (!confirmacion) {
+                e.preventDefault();
+            }
+        });
+    }
+});
+</script>
+{% endblock %}
